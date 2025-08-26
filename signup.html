@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="favicon.png" type="image/png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrar-se</title>
+
+<!-- Import Caveat font from Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet">
+
+<style>
+    /* Apply Caveat to all elements */
+    * {
+        font-family: 'Caveat', cursive;
+        font-size: clamp(12px, 4vw, 1.2rem);
+    }
+
+    body {
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* full viewport height */
+        margin: 0;
+        padding: 0;
+    }
+
+    main {
+        flex: 1; /* pushes footer down */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 20px;
+    }
+
+    .main-content {
+        text-align: center;
+        max-width: 100%;
+    }
+
+    h2 {
+        margin-top: 20px;
+        font-size: clamp(20px, 6vw, 2.5rem);
+    }
+
+    /* Inputs and form buttons */
+    .main-content input,
+    .main-content {
+        display: block;
+        margin: 0px 0;
+        padding: 10px;
+        width: 70vw;
+        max-width: 250px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 13px;
+    }
+
+    .form-btn {
+        text-align: center;
+        font-family: 'Caveat', cursive;
+        font-size: 20px;
+        border: none;
+        border-radius: 10px;
+    }
+
+    p#errorMsg {
+        color: red;
+        font-size: 1.5em;
+    }
+
+    /* Footer */
+    footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+     margin-top:auto;
+     
+  
+}
+
+    footer p {
+        margin: 0;
+        padding-left: 10px;
+    }
+
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
+</head>
+<body>
+    <div id="header"></div>
+    <script type="module" src="load-header.js"></script>
+
+    <main>
+      <div class="main-content">
+          <h2>Registrar-se</h2>
+          <input id="email" type="email" placeholder="Adreça email" required><br>
+          <input id="confirmEmail" type="email" placeholder="Repeteix l'adreça email" required><br>
+          <input id="password" type="password" placeholder="Contrasenya" required><br>
+          <button id="signupBtn" class="form-btn">Registra't</button>
+
+          <p id="errorMsg"></p>
+
+          <p>Ja tens un compte? <a href="login.html" style="color: rgb(222, 115, 1);" >Inicia sessió</a></p>
+      </div>
+    </main>
+
+    <footer>
+      <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+    </footer>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        document.getElementById('signupBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            const confirmEmail = document.getElementById('confirmEmail').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = '';
+
+            if (email !== confirmEmail) {
+                errorMsg.textContent = "Les adreces no es corresponen.";
+                return;
+            }
+
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                errorMsg.textContent = "Si us plau, inseriu una adreça de correu vàlida.";
+                return;
+            }
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Sessió iniciada!");
+                window.location.href = "daily.html";
+            } catch (err) {
+                if (err.code === 'auth/email-already-in-use') {
+                    errorMsg.textContent = "L'usuari ja existeix. Si us plau, inicieu sessió.";
+                } else {
+                    errorMsg.textContent = err.message;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

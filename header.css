@@ -1,0 +1,131 @@
+/* Header container */
+header {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* gradient */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem; /* horizontal padding */
+    height: 80px; /* taller header */
+    position: relative;
+    z-index: 1000;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* subtle shadow */
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+}
+
+/* Logo */
+.logo img {
+    height: auto;
+    max-height: 60px; /* ensures zoom stays inside header */
+    max-width: 50vw;  /* fluid scaling with viewport */
+    transition: transform 0.3s;
+    width: auto;      /* keep aspect ratio */
+}
+
+.logo img:hover {
+    transform: scale(1.1); /* zoom effect */
+}
+
+/* Menu container pushes button to right */
+.menu-container {
+    margin-left: auto;
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Menu button */
+.menu-btn {
+    font-size: 26px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 5px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.menu-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+/* Dropdown menu */
+.dropdown {
+    display: none;
+    position: absolute;
+    top: 100%; 
+    right: 0;
+    background-color: white;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 180px;
+    white-space: nowrap;
+    z-index: 1000;
+    transform: translateY(10px);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.dropdown.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Dropdown links */
+.dropdown a {
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #333;
+    font-family: 'Caveat', cursive;
+    font-size:3vh;
+    font-weight: 100;
+    transition: background 0.3s, color 0.3s; 
+}
+
+.dropdown a:hover {
+    background-color: #ffecd1;
+    color: #ff7f50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+    header {
+        height: 70px;
+        padding: 0 1rem;
+    }
+
+    .logo img {
+        max-height: 50px;
+        max-width: 50vw; /* allow a bit more width on small screens */
+    }
+
+    .menu-btn {
+        font-size: 22px;
+        padding: 0.4rem 0.6rem;
+    }
+}
+
+@media (max-width: 350px) {
+    .logo img {
+        max-height: 40px;
+        max-width: 50vw; /* shrink further if very narrow */
+    }
+
+    .menu-btn {
+        font-size: 20px;
+    }
+}
+
+#userEmail {
+    font-family: "Caveat", cursive;
+    font-size: 1.1rem;   /* adjust size as needed */
+    color: #000;         /* darker text for readability */
+    font-weight: bold;
+    text-align: left;
+}

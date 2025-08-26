@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Save Game Stats</title>
+</head>
+<body>
+<h2>Save Game Stats</h2>
+<input id="tries" type="number" placeholder="Number of tries"><br>
+<button id="saveBtn">Save Stats</button>
+<button id="logoutBtn">Logout</button>
+<p><a href="view-stats.html">View Stats</a></p>
+
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = "login.html";
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+    const tries = document.getElementById('tries').value;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    await addDoc(collection(db, "game_stats"), {
+        uid: user.uid,
+        tries: Number(tries),
+        timestamp: serverTimestamp()
+    });
+    alert("Stats saved!");
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = "login.html");
+});
+</script>
+</body>
+</html>

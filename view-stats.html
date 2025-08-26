@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estadístiques</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+  <!-- Load Caveat font -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh; /* ensure full viewport height */
+    }
+    main {
+      flex: 1; /* main content grows */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      background: linear-gradient(90deg, #ff7f50, #ffb347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      margin: 1rem 0;
+      font-family: 'Caveat', cursive;
+      font-size: clamp(0, 6vw, 3rem);
+    }
+    #chart-container, #daily-chart-container, #difficulty-chart-container {
+      width: 90%;
+      max-width: 700px;
+      flex-grow: 1;
+      margin-bottom: 2rem;
+      max-height: 30vh;
+    }
+    #daily-chart-container {
+  width: 90%;
+  max-width: 700px;
+  flex-grow: 1;
+  margin-bottom: 2rem;
+  max-height: 50vh; /* bigger container */
+  min-height: 300px; /* ensures enough space */
+}
+
+    #message {
+      margin-top: 2rem;
+      color: grey;
+      font-style: italic;
+      text-align: center;
+    }
+    h1.page-title {
+      font-family: "Georgia", serif;
+      font-weight: bold;
+      font-size: 56px;
+      line-height: 1.3;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0;
+      color: white;
+    }
+    footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+}
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <script type="module" src="load-header.js"></script>
+
+  <main>
+    <h1>Històric d'errors</h1>
+
+    <div id="chart-container">
+      <canvas id="mistakesChart"></canvas>
+    </div>
+
+    <h1>Històric de dificultats</h1>
+    <div id="difficulty-chart-container">
+      <canvas id="difficultyChart"></canvas>
+    </div>
+
+    <h1>Últims rebus jugats</h1>
+    <div id="daily-chart-container">
+      <canvas id="lastDaysChart"></canvas>
+    </div>
+
+    <div id="message"></div>
+  </main>
+
+  <script>
+    const menuBtn = document.getElementById("menu-toggle");
+    const dropdown = document.getElementById("dropdown-menu");
+    menuBtn.addEventListener("click", () => dropdown.classList.toggle("show"));
+    window.addEventListener("click", (e) => {
+      if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove("show");
+      }
+    });
+  </script>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const ctx = document.getElementById('mistakesChart').getContext('2d');
+    const dailyCtx = document.getElementById('lastDaysChart').getContext('2d');
+    const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+    const messageEl = document.getElementById('message');
+    const chartContainer = document.getElementById('chart-container');
+
+    let chart = null;
+    let dailyChart = null;
+    let difficultyChart = null;
+
+    // Common font for all charts
+    const chartFont = {
+      family: "'Caveat', cursive",
+      size: 16,
+      style: 'normal',
+      weight: '400',
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        chartContainer.style.display = "none"; 
+        document.getElementById('daily-chart-container').style.display = "none";
+        document.getElementById('difficulty-chart-container').style.display = "none";
+        messageEl.innerHTML = `
+        <div style="font-family: 'Caveat', cursive; font-size: 1.5rem;">
+          Si us plau, inicia sessió per veure les estadístiques.<br>
+          <button id="loginBtn" style="
+            margin-top: 1rem;
+            padding: 0rem 0.5rem;
+            background: linear-gradient(90deg, #ff7f50, #ffb347);
+            border: none;
+            color: white;
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 8px;
+          ">
+            Inicia sessió
+          </button>
+        `;
+        document.getElementById("loginBtn").addEventListener("click", () => {
+          window.location.href = "login.html";
+        });
+        return;
+      }
+
+      try {
+        const statsCol = collection(db, 'users', user.uid, 'stats');
+        const snapshot = await getDocs(statsCol);
+
+        if (snapshot.empty) {
+          messageEl.textContent = 'No hi ha dades d\'estadístiques per mostrar.';
+          return;
+        }
+
+        // --- Mistakes frequency chart ---
+        const freqMap = {};
+        snapshot.forEach(doc => {
+          const stat = doc.data();
+          const mistakes = stat.mistakes || 0;
+          freqMap[mistakes] = (freqMap[mistakes] || 0) + 1;
+        });
+        const maxMistakes = Math.max(...Object.keys(freqMap).map(Number));
+        const mistakeCounts = [];
+        const frequencies = [];
+        for (let i = 0; i <= maxMistakes; i++) {
+          mistakeCounts.push(i);
+          frequencies.push(freqMap[i] || 0);
+        }
+
+        if (chart) chart.destroy();
+        const gradient = ctx.createLinearGradient(0, 0, ctx.canvas.width, 0);
+        gradient.addColorStop(0, '#ff7f50');
+        gradient.addColorStop(1, '#ffb347');
+
+        chart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: mistakeCounts,
+            datasets: [{
+              label: 'Nombre de dies',
+              data: frequencies,
+              backgroundColor: gradient,
+              borderColor: gradient,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0, font: chartFont },
+                title: { display: true, text: 'Dies', font: chartFont }
+              },
+              x: {
+                title: { display: true, text: "Número d'errors", font: chartFont },
+                ticks: { font: chartFont }
+              }
+            },
+            plugins: {
+              legend: { display: false, labels: { font: chartFont } },
+              tooltip: { bodyFont: chartFont, titleFont: chartFont }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+
+        // --- Difficulty frequency chart ---
+        const diffFreqMap = {};
+        snapshot.forEach(doc => {
+          const stat = doc.data();
+          const difficulty = stat.difficulty || 0;
+          diffFreqMap[difficulty] = (diffFreqMap[difficulty] || 0) + 1;
+        });
+
+        const maxDifficulty = Math.max(...Object.keys(diffFreqMap).map(Number));
+        const difficultyLevels = [];
+        const difficultyFrequencies = [];
+        for (let i = 1; i <= maxDifficulty; i++) {
+          difficultyLevels.push(i);
+          difficultyFrequencies.push(diffFreqMap[i] || 0);
+        }
+
+        if (difficultyChart) difficultyChart.destroy();
+        const diffGradient = difficultyCtx.createLinearGradient(0, 0, difficultyCtx.canvas.width, 0);
+        diffGradient.addColorStop(0, '#6a11cb');
+        diffGradient.addColorStop(1, '#2575fc');
+
+        difficultyChart = new Chart(difficultyCtx, {
+          type: 'bar',
+          data: {
+            labels: difficultyLevels,
+            datasets: [{
+              label: 'Nombre de dies',
+              data: difficultyFrequencies,
+              backgroundColor: diffGradient,
+              borderColor: diffGradient,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0, font: chartFont },
+                title: { display: true, text: 'Dies', font: chartFont }
+              },
+              x: {
+                title: { display: true, text: "Nivell de dificultat", font: chartFont },
+                ticks: { font: chartFont },
+                reverse: true
+              }
+            },
+            plugins: {
+              legend: { display: false, labels: { font: chartFont } },
+              tooltip: { bodyFont: chartFont, titleFont: chartFont }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+
+        // --- Last 7 days mistakes chart ---
+        const lastDaysQuery = query(statsCol, orderBy('date', 'desc'), limit(7));
+        const lastDaysSnapshot = await getDocs(lastDaysQuery);
+
+        const dailyLabels = [];
+        const dailyData = [];
+        lastDaysSnapshot.forEach(doc => {
+          const stat = doc.data();
+          const d = new Date(stat.date);
+          const formattedDate = String(d.getDate()).padStart(2, '0') + '-' +
+                                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                                d.getFullYear();
+
+          dailyLabels.push(formattedDate);
+          dailyData.push(stat.mistakes || 0);
+        });
+
+        dailyLabels.reverse();
+        dailyData.reverse();
+
+        if (dailyChart) dailyChart.destroy();
+        const dailyGradient = dailyCtx.createLinearGradient(0, 0, dailyCtx.canvas.width, 0);
+        dailyGradient.addColorStop(0, '#ff7f50');
+        dailyGradient.addColorStop(1, '#ffb347');
+
+        dailyChart = new Chart(dailyCtx, {
+  type: 'line',
+  data: {
+    labels: dailyLabels,
+    datasets: [{
+      label: "Errors per day",
+      data: dailyData,
+      borderColor: dailyGradient,
+      backgroundColor: dailyGradient,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 6,
+      pointBackgroundColor: dailyGradient,
+      pointBorderColor: dailyGradient,
+      pointHoverRadius: 8,
+      borderWidth: 3
+    }]
+  },
+  options: {
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { precision: 0, font: chartFont },
+        title: { display: true, text: 'Errors', font: chartFont }
+      },
+      x: {
+  reverse: true,
+  title: {
+    display: true,
+    text: 'Últims dies jugats',
+    font: chartFont,
+    padding: { top: 0 } // <-- increases space above the title
+  },
+  ticks: {
+    font: chartFont,
+    autoSkip: false,
+    maxRotation: 45,
+    minRotation: 45
+  }
+}
+
+    },
+    plugins: {
+      legend: { display: false, labels: { font: chartFont } },
+      tooltip: { bodyFont: chartFont, titleFont: chartFont }
+    },
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
+
+
+      } catch (error) {
+        messageEl.textContent = 'Error carregant les dades: ' + error.message;
+        console.error(error);
+      }
+    });
+  </script>
+
+  <footer>
+    <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+  </footer>
+</body>
+</html>

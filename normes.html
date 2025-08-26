@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="favicon.png" type="image/png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Normes</title>
+<style>
+  * {
+        font-family: 'Caveat', cursive;
+        font-size: clamp(12px, 4vw, 1.2rem);
+    }
+    body {
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* updated */
+        
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    main {
+        flex: 1; /* added */
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* optional: centers content vertically */
+        padding: 3rem;
+        font-size: 2vw;
+    }
+
+    h2 {
+        margin-top: 20px;
+    }
+
+    input {
+        display: block;
+        margin: 10px 0;
+        padding: 10px;
+        width: 250px;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin: 10px 0;
+        cursor: pointer;
+    }
+
+    #popup {
+        display: none; /* hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    #popupContent {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 300px;
+    }
+
+    #popupContent button {
+        margin: 10px;
+    }
+
+    p#errorMessage {
+        color: red;
+    }
+
+    footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+     margin-top:auto;
+     
+  
+}
+      h1, h2 {
+      color: #2c3e50;
+    }
+    ul {
+      margin-bottom: 20px;
+    }
+    .example {
+      background-color: #e8f4f8;
+      padding: 10px;
+      border-left: 4px solid #3498db;
+      margin-bottom: 20px;
+    }
+    .tips {
+      background-color: #fff3cd;
+      padding: 10px;
+      border-left: 4px solid #ffc107;
+      margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+  <div id="header"></div>
+<script type="module" src="load-header.js"></script>
+
+<main>
+<h1>Com resoldre un Rebus en català</h1>
+
+  <p>Un <strong>rebus</strong> és un enigma visual on paraules, lletres, números o símbols representen una paraula o frase. Per resoldre’l, cal pensar de manera creativa i prestar atenció als detalls.</p>
+
+  <h2>1. Observa bé el rebus</h2>
+  <ul>
+    <li>Mira totes les lletres, imatges i símbols.</li>
+    <li>Cada element pot tenir un significat literal o un so associat.</li>
+  </ul>
+
+  <h2>2. Cerca sons i jocs de paraules</h2>
+  <ul>
+    <li>Molts rebus es basen en <strong>homònims</strong> o <strong>sons similars</strong>.</li>
+    <li>Exemple: La imatge d’un “peix” + la lletra “T” → <strong>peixet</strong>.</li>
+    <li>Les paraules poden estar partides, girades o superposades.</li>
+  </ul>
+
+  <h2>3. Interpreta símbols i posicions</h2>
+  <ul>
+    <li>Una imatge sobre una altra pot significar “sobre” o “a sobre de”.</li>
+    <li>Paraules petites o al costat d’alguna cosa poden indicar relacions com “dins de”, “entre”, “després de”, etc.</li>
+  </ul>
+
+  <h2>4. Combina les pistes</h2>
+  <ul>
+    <li>Uneix sons i símbols per formar una paraula o frase.</li>
+    <li>Prova diferents combinacions fins que tingui sentit en català.</li>
+  </ul>
+
+  <h2>5. Verifica el significat</h2>
+  <ul>
+    <li>La solució ha de ser una paraula o frase coherent en català.</li>
+    <li>Si no té sentit, revisa si has interpretat algun element incorrectament.</li>
+  </ul>
+
+  <div class="example">
+    <h3>Exemple de Rebus Català</h3>
+    <p>Imatge: 🐝 + “L”</p>
+    <p>Solució: <strong>bell</strong> (el so de “bee” + L → bell)</p>
+  </div>
+
+  <div class="tips">
+    <h3>Consells Finals</h3>
+    <ul>
+      <li>No tots els rebus són literals: pensa també en metàfores i sons.</li>
+      <li>Parla en veu alta mentre proves sons: sovint ajuda a descobrir paraules amagades.</li>
+      <li>Practica diàriament: com més en resols, més intuïtiu et tornaràs.</li>
+    </ul>
+  </div>
+</main>
+<footer>
+  <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+</footer>
+</body>
+</html>

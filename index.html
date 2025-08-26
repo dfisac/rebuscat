@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="favicon.png" type="image/png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REBUScat.cat</title>
+<style>
+    body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.center-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex-grow: 1;
+    justify-content: center; /* optional */
+}
+
+
+
+    /* Header placeholder styling */
+    #header {
+        width: 100%;
+        /* Optional: adjust min-height if your header content requires it */
+        min-height: 70px; 
+    }
+
+    .container {
+        position: relative;
+        display: inline-block;
+        text-align: center;
+        max-width: 100%;
+    }
+
+    .logobig {
+        width: 90%;
+        max-width: 300px;
+        height: auto;
+        display: flex;
+        margin-top: -3.5rem;
+    }
+
+    .button {
+        position: absolute;
+        width: 35%;
+        max-width: 150px;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        transform: scale(1.2);
+    }
+
+    .play-btn {
+        top: -20%;
+        left: 50%;
+    }
+
+    .login-btn {
+        top: 15%;
+        left: 50%;
+    }
+
+    @media (max-width: 500px) {
+        .menu-btn {
+            font-size: 20px;
+        }
+        
+        .button {
+            width: 40%;
+        }
+    }
+
+    /* Footer container */
+   footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+}
+.rebus-image {
+    width: 80%;
+    max-width: 200px;
+    height: auto;
+    margin-top: 1rem;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header"></div>
+<script type="module" src="load-header.js"></script>
+
+<!-- Centered content wrapper -->
+<div class="center-wrapper">
+    <div class="container">
+        <img src="logo.png" alt="Logo" class="logobig">
+
+        <a href="daily.html">
+            <img src="jugar-ara.png" alt="Jugar Ara" class="button play-btn">
+        </a>
+
+        <a href="login.html">
+            <img src="login.png" alt="Log In" class="button login-btn">
+        </a>
+    </div>
+    
+
+    <p style="font-family: 'Caveat', cursive;
+        font-size: clamp(1rem, 6vw, 2rem);"> La pàgina de REBUS en català.  </p>
+</div>
+
+<script type="module">
+import { auth } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const menuBtn = document.getElementById('menu-toggle');
+const dropdown = document.getElementById('dropdown-menu');
+const loginLink = document.getElementById('loginLink');
+const userSection = document.getElementById('userSection');
+const userEmail = document.getElementById('userEmail');
+const logoutLink = document.getElementById('logoutLink');
+
+menuBtn.addEventListener('click', () => {
+    dropdown.classList.toggle('show');
+});
+
+window.addEventListener('click', (e) => {
+    if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Firebase auth listener
+onAuthStateChanged(auth, user => {
+    if (user) {
+        loginLink.style.display = 'none';
+        userEmail.textContent = user.email;
+        userSection.style.display = 'block';
+    } else {
+        loginLink.style.display = 'block';
+        userSection.style.display = 'none';
+    }
+});
+
+// Logout functionality
+logoutLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+        await signOut(auth);
+        alert("You have been logged out.");
+        window.location.reload();
+    } catch (error) {
+        alert("Logout failed: " + error.message);
+    }
+});
+</script>
+
+<!-- Footer -->
+
+<footer>
+  <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+</footer>
+</body>
+</html>

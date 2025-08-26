@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="favicon.png" type="image/png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rebus diari</title>
+<!-- Load Firebase config and init -->
+<script src="firebase-config.js" type="module"></script>
+<style>
+  /* Your existing styles unchanged */
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    min-height: 100vh;
+  }
+  html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+  .main-content {
+    flex: 1; /* this pushes footer to the bottom */
+}
+  form#rebusForm {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .word-inputs {
+  display: flex;
+  flex-wrap: wrap;       /* allow words to move to next line */
+  justify-content: center; /* center the whole line */
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+ .word {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem; /* optional spacing between wrapped lines */
+    align-items: center;   /* ⬅️ ensures letters and hyphens/apostrophes align vertically */
+  }
+
+  input.letter-box {
+    width: clamp(1.7ch, 5vw, 2ch);      
+    height: clamp(2rem, 7vw, 3rem); 
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: monospace;
+    vertical-align: middle; /* ⬅️ helps keep characters vertically centered */
+  }
+
+  /* New class for hyphens/apostrophes */
+  .letter-box.symbol {
+    font-size: 10vw;
+    line-height: 1;
+    padding-top: 0em;  /* tweak as needed to center symbol */
+  }
+  h1 {
+    font-family: "Georgia", serif;
+    font-weight: bold;
+    font-size: 56px;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .btn-comprovar {
+    font-family: 'Caveat', cursive;
+  font-size: clamp(1rem, 6vw, 2rem);
+  padding: 0.75vw 2vw;
+  margin-top: -0.5rem;
+  margin-bottom: 2rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 2vw;
+  background: linear-gradient(90deg, #ff7f50, #ffb347); /* same as header */
+  color: white;
+  transition: transform 0.2s, opacity 0.3s;
+}
+
+.btn-comprovar:hover {
+  opacity: 0.9;        /* subtle dim */
+  transform: scale(1.05); /* slight zoom */
+}
+
+  #mistakeCounter {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    padding: 0.5vw 0.5vw;
+    margin-top: 0rem;
+    border-radius:2vw;
+    color: white;
+    text-align: center;
+    width: fit-content;
+    transition: background-color 0.3s ease;
+    user-select: none;
+
+  margin: 1rem auto;   /* centers horizontally */
+  display: block;
+}
+  .highlight {
+    font-family: "Georgia", serif;
+    font-weight: bold;
+    font-size: 56px;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .p {
+    color: grey;
+    font-family: "Lucida Sans", sans-serif;
+    font-size: 0.7em;
+  }
+  /* 🔹 Modal backdrop */
+#loginModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+  font-family: 'Caveat',cursive;
+}
+
+/* 🔹 Modal box */
+#loginModal .modal-content {
+  background: #fff;
+  padding: 2rem 1.5rem;
+  border-radius: 1rem;
+  width: 70%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  animation: scaleUp 0.25s ease;
+}
+
+/* 🔹 Heading */
+#loginModal h3 {
+  margin-bottom: 1rem;
+  font-family: 'Caveat',cursive;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* 🔹 Inputs */
+#loginModal input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;   /* ensures padding & border fit inside */
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#loginModal input:focus {
+  border-color: #ff7f50;
+  box-shadow: 0 0 0 3px rgba(255,127,80,0.25);
+  outline: none;
+}
+
+/* 🔹 Buttons */
+#loginModal button {
+  width: 70%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: transform 0.15s, opacity 0.2s;
+  font-family: 'Caveat',cursive;
+}
+#loginModal button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* 🔹 Specific button colors */
+#loginBtn     { background: linear-gradient(90deg,#ff7f50,#ffb347); color:white; }
+#signupBtn    { background: #ff7300; color:white; }
+#cancelLogin  { background: #ff9800; color:white; }
+#viewStatsBtn { background: linear-gradient(90deg,#ff7f50,#ffb347); color:white; }
+#keepPlayingBtn { background:#ff9800; color:white; }
+
+/* 🔹 Error message */
+#loginError {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 0.5rem;
+}
+
+/* 🔹 Message at top (mistake/complete text) */
+#mistakeMessage {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* 🔹 Animations */
+@keyframes fadeIn {
+  from {opacity:0;}
+  to   {opacity:1;}
+}
+@keyframes scaleUp {
+  from {transform:scale(0.9);}
+  to   {transform:scale(1);}
+}
+
+  /* Footer container */
+  footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+     margin-top:auto;
+     
+  
+}
+
+/* Container to align title and date side by side */
+/* Container to align title and date side by side, flush left */
+.images-wrapper {
+  display: flex;
+  gap: 2vw; /* space between rebus.png and diari.png */
+  justify-content: center;
+  align-items: center;
+  margin-top:1rem;
+  margin-bottom: 0.5rem; /* optional spacing from the date */
+}
+
+.title-bar {
+  display: flex;
+  flex-direction: column; /* stack images and date vertically */
+  align-items: center;    /* center horizontally */
+}
+.rebus-title {
+  max-height: 60px; /* adjust as needed */
+  height: 7vw;
+}
+
+
+.date-title {
+  font-family: brushscript mt, cursive;
+  font-weight: 400;
+  font-size: clamp(1rem, 5vw, 1.5rem);
+  color: #666;
+  text-align: left;       /* was center */
+  align-self: flex-start; /* forces it to the left of the flex container */
+  margin-left: 5%;        /* match left edge of rebus image */
+  margin-bottom: 4rem;
+}
+
+/* Make difficulty align left with the rebus image */
+.rebus-wrapper {
+  display: flex;
+  justify-content: center;   /* centers whole block */
+  margin-bottom: -1rem;
+}
+
+.rebus-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;   /* align children (date, difficulty, etc.) to left edge */
+  width: 90%;
+  max-width: 600px;
+}
+
+.rebus-image {
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
+#difficultyDisplay{
+  text-align: left;
+  margin: -1vh 0.5vw;
+  font-family: 'Caveat', cursive;
+  font-weight: 400;
+  font-size: clamp(0.5rem, 4vw, 1.5rem);
+  color: #666;
+  text-align: left;       /* was center */
+  align-self: flex-start; /* forces it to the left of the flex container */
+  
+}
+.date-title {
+  text-align: left;
+  margin: 0.5rem 0.5vw;
+  font-family: 'Caveat', cursive;
+  font-weight: 400;
+  font-size: clamp(1rem, 5vw, 1.5rem);
+  color: #666;
+  text-align: left;       /* was center */
+  align-self: flex-start; /* forces it to the left of the flex container */
+}
+
+
+
+</style>
+</head>
+<body>
+<div id="header"></div>
+<script type="module" src="load-header.js"></script>
+
+<!-- Login/Stats Modal -->
+<div id="loginModal">
+  <div class="modal-content">
+    <p id="mistakeMessage" style="color:black; margin-bottom:10px;"></p>
+
+    <!-- Login/Signup version -->
+    <div id="modalLoginSection">
+      <h3>Inicia sessió o registra't</h3>
+      <input type="email" id="loginEmail" placeholder="Adreça email" />
+      <input type="password" id="loginPassword" placeholder="Contrasenya" />
+      <button id="loginBtn" style="background: rgb(255, 106, 0); color: white;">Iniciar sessió</button>
+      <button id="signupBtn" style="background: orange; color: white;">Registrar-se</button>
+      <button id="cancelLogin" style="background: #ff9800; color: white;">Cancel</button>
+      <div id="loginError" style="color: red; font-size: 0.9em; margin-top: 5px;"></div>
+    </div>
+
+    <!-- Logged-in version -->
+    <div id="modalStatsSection" style="display: none;">
+      <button
+        id="viewStatsBtn"
+        style="background: rgb(255, 123, 0); color: white; padding: 8px; width: 70%; border: none; cursor: pointer;"
+      >
+        Estadístiques personals
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="rebus-wrapper">
+  <div class="rebus-container">
+    <div class="images-wrapper">
+      <img src="rebus.png" alt="Rebus" class="rebus-title" />
+      <img src="diari.png" alt="Diari" class="rebus-title" />
+    </div>
+    <span id="data-ampli" class="date-title">--</span>
+    <img src="rebus1.png" alt="Rebus Puzzle" class="rebus-image" />
+    <div id="difficultyDisplay"></div>
+    <div id="mistakeCounter" style="background-color: #ffb347; color: white;">Errors: 0</div>
+  </div>
+</div>
+
+
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  const menuBtn = document.getElementById("menu-toggle");
+  const dropdown = document.getElementById("dropdown-menu");
+
+  if (menuBtn && dropdown) {
+    menuBtn.addEventListener("click", () => dropdown.classList.toggle("show"));
+    window.addEventListener("click", (e) => {
+      if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove("show");
+      }
+    });
+  }
+
+  let currentUser = null;
+  let pendingResult = null;
+  let puzzleLocked = false; // NEW
+
+  // ✅ New function to get local today date
+  function getLocalToday() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  async function checkIfSolvedToday() {
+    if (!currentUser) return;
+
+    const today = getLocalToday(); // use local date
+    const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
+    const statSnap = await getDoc(statDocRef);
+
+    if (statSnap.exists()) {
+      const data = statSnap.data();
+      const mistakesToday = data.mistakes ?? 0;
+
+      const messageText = `Felicitats! L'has resolt en ${mistakesToday} error${mistakesToday !== 1 ? "s" : ""}.`;
+
+      document.getElementById("mistakeMessage").textContent = messageText;
+      document.getElementById("modalLoginSection").style.display = "none";
+      document.getElementById("modalStatsSection").style.display = "block";
+      addKeepPlayingButton(true);
+      document.getElementById("loginModal").style.display = "flex";
+
+      mistakes = mistakesToday;
+      updateMistakeCounter();
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (user && pendingResult !== null) {
+      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+      pendingResult = null;
+    }
+
+    if (user) {
+      await checkIfSolvedToday();
+      if (window.location.pathname.endsWith("index.html")) {
+        window.location.href = "view-stats.html";
+      }
+    }
+  });
+
+  async function saveMistakesDaily(mistakesCount, difficulty) {
+    if (!currentUser) return;
+    try {
+      const today = getLocalToday(); // use local date
+      const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
+      const statSnap = await getDoc(statDocRef);
+      if (statSnap.exists()) {
+        console.log("Mistakes already saved for today, skipping.");
+        return;
+      }
+      await setDoc(statDocRef, { 
+        date: today, 
+        mistakes: mistakesCount,
+        difficulty: difficulty ?? null 
+      });
+    } catch (error) {
+      console.error("Error saving mistakes:", error);
+    }
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const errBox = document.getElementById("loginError");
+    errBox.textContent = "";
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      errBox.textContent = err.message;
+    }
+  });
+
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const errBox = document.getElementById("loginError");
+    errBox.textContent = "";
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      errBox.textContent = err.message;
+    }
+  });
+
+  document.getElementById("cancelLogin").addEventListener("click", () => {
+    window.location.href = "past.html";
+  });
+
+  document.getElementById("viewStatsBtn").addEventListener("click", () => {
+    window.location.href = "view-stats.html";
+  });
+
+  function addKeepPlayingButton(isLoggedIn) {
+    if (isLoggedIn) {
+      const statsSection = document.getElementById("modalStatsSection");
+      let keepBtn = document.getElementById("keepPlayingBtn");
+      if (!keepBtn) {
+        keepBtn = document.createElement("button");
+        keepBtn.id = "keepPlayingBtn";
+        keepBtn.textContent = "Seguir jugant (arxiu)";
+        keepBtn.style.background = "orange";
+        keepBtn.style.color = "white";
+        keepBtn.style.padding = "8px";
+        keepBtn.style.width = "70%";
+        keepBtn.style.marginTop = "5px";
+        keepBtn.onclick = () => (window.location.href = "past.html");
+        statsSection.appendChild(keepBtn);
+      }
+    }
+  }
+
+  function revealSolution() {
+  document.querySelectorAll("input.letter-box").forEach((input) => {
+    if (input.dataset.solution) {
+      input.value = input.dataset.solution;
+    }
+    input.readOnly = true;
+  });
+
+  puzzleLocked = true;
+
+  // ✅ Hide the button and mistake counter
+  const btn = document.querySelector(".btn-comprovar");
+  if (btn) btn.style.display = "none";
+
+  const counter = document.getElementById("mistakeCounter");
+  if (counter) counter.style.display = "none";
+}
+
+
+  document.getElementById("loginModal").addEventListener("click", (e) => {
+    if (e.target.id === "loginModal") {
+      document.getElementById("loginModal").style.display = "none";
+      revealSolution();
+    }
+  });
+
+  window.handleCorrectAnswer = function (mistakes) {
+    const messageText = `Felicitats! L'has resolt en ${mistakes} error${mistakes !== 1 ? "s" : ""}.`;
+    document.getElementById("mistakeMessage").textContent = messageText;
+
+    if (currentUser) {
+      document.getElementById("modalLoginSection").style.display = "none";
+      document.getElementById("modalStatsSection").style.display = "block";
+      saveMistakesDaily(mistakes, difficulty);   // ← uses local date
+      addKeepPlayingButton(true);
+    } else {
+      document.getElementById("modalLoginSection").style.display = "block";
+      document.getElementById("modalStatsSection").style.display = "none";
+      pendingResult = { mistakes, difficulty };
+      document.getElementById("cancelLogin").textContent = "Seguir jugant (arxiu)";
+      document.getElementById("cancelLogin").style.background = "#ff9800";
+      document.getElementById("cancelLogin").onclick = () =>
+        (window.location.href = "past.html");
+    }
+
+    document.getElementById("loginModal").style.display = "flex";
+    mistakes = 0;
+    updateMistakeCounter();
+    document.getElementById("rebusForm").reset();
+    document.getElementById("word1letter1").focus();
+  };
+</script>
+
+<form id="rebusForm">
+  <div class="word-inputs" id="wordInputsContainer"></div>
+  <button type="submit" class="btn-comprovar">Comprovar</button>
+</form>
+
+<script>
+function mostraData() {
+  const avui = new Date();
+  const optAmpli = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  document.getElementById("data-ampli").textContent = avui.toLocaleDateString("ca-ES", optAmpli);
+}
+mostraData();
+
+
+async function loadDailyPuzzle() {
+  // Use local date instead of UTC
+  function getTodayStrUnderscore() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); // zero-pad month
+    const dd = String(today.getDate()).padStart(2, "0");      // zero-pad day
+    return `${yyyy}_${mm}_${dd}`;
+  }
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0"); // zero-pad month
+  const dd = String(today.getDate()).padStart(2, "0");      // zero-pad day
+  const todayStrUnderscore = `${yyyy}_${mm}_${dd}`;
+
+  try {
+    const res = await fetch("puzzles.json");
+    const files = await res.json();
+    const todayFile = files.find(f => f.startsWith(todayStrUnderscore));
+    if (!todayFile) {
+      console.error("No puzzle found for today:", todayStrUnderscore);
+      document.querySelector(".rebus-image").src = "no-puzzle.png";
+      return;
+    }
+
+    document.querySelector(".rebus-image").src = todayFile;
+
+    const nameWithoutExt = todayFile.replace(/\.[^/.]+$/, "");
+    const parts = nameWithoutExt.split("_");
+
+    // 🔹 Extract difficulty from last part "DIFX"
+    let difficulty = null;
+    const lastPart = parts[parts.length - 1];
+    const match = lastPart.match(/^DIF([1-5])$/);
+    if (match) {
+      difficulty = parseInt(match[1], 10);
+    }
+
+    if (difficulty) {
+      document.getElementById("difficultyDisplay").textContent =
+        `dificultat: ${difficulty}/5`;
+    }
+
+    const correctAnswer = parts.slice(3, parts.length - 1).map(w => w.toUpperCase());
+    const wordLengths = correctAnswer.map(w => w.length);
+    let mistakes = 0;
+
+    const wordInputsContainer = document.getElementById("wordInputsContainer");
+    wordInputsContainer.innerHTML = "";
+
+    const allInputs = [];
+
+    correctAnswer.forEach((word, i) => {
+      const wordDiv = document.createElement("div");
+      wordDiv.className = "word";
+      wordDiv.id = `word${i + 1}`;
+
+      for (let j = 0; j < word.length; j++) {
+        const char = word[j];
+        if (/[A-ZÀ-Ý]/.test(char)) {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.maxLength = 1;
+          input.className = "letter-box";
+          input.dataset.solution = char;
+          input.autocomplete = "off";
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key.length === 1 && /[a-zA-ZÀ-ÿ]/.test(e.key)) {
+              e.preventDefault();
+              input.value = e.key.toUpperCase();
+              const nextIndex = allInputs.indexOf(input) + 1;
+              if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+            } else if (e.key === "Backspace") {
+              e.preventDefault();
+              if (input.value === "") {
+                const prevIndex = allInputs.indexOf(input) - 1;
+                if (prevIndex >= 0) {
+                  allInputs[prevIndex].value = "";
+                  allInputs[prevIndex].focus();
+                }
+              } else {
+                input.value = "";
+              }
+            } else if (e.key === " ") {
+              e.preventDefault(); // ignore spaces
+            }
+          });
+
+          allInputs.push(input);
+          wordDiv.appendChild(input);
+        } else if (char === "'" || char === "-") {
+          const span = document.createElement("span");
+          span.textContent = char;
+          span.style.fontSize = "4vw";
+          span.style.lineHeight = "3vw";
+          span.style.fontFamily = "monospace";
+          span.className = "letter-box symbol"; 
+          wordDiv.appendChild(span);
+        }
+      }
+
+      wordInputsContainer.appendChild(wordDiv);
+    });
+
+    function updateMistakeCounter() {
+      const counter = document.getElementById("mistakeCounter");
+      counter.textContent = `Errors: ${mistakes}`;
+
+      const startColor = { r: 255, g: 200, b: 0 }; 
+      const endColor   = { r: 204, g: 0, b: 0 };   
+
+      let t = mistakes / 5;       
+      if (t > 1) t = 1;           
+
+      const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
+      const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
+      const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+
+      counter.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    }
+
+    window.updateMistakeCounter = updateMistakeCounter;
+
+    window.checkAnswer = function(e) {
+      e.preventDefault();
+
+      for (const input of allInputs) {
+        if (!input.value) {
+          alert("Pleneu totes les lletres!");
+          input.focus();
+          return false;
+        }
+      }
+
+      let index = 0;
+      for (let i = 0; i < correctAnswer.length; i++) {
+        for (let j = 0; j < correctAnswer[i].length; j++) {
+          const char = correctAnswer[i][j];
+          if (char === "'" || char === "-") continue;
+          const input = allInputs[index];
+          if (input.value.toUpperCase() !== char) {
+            mistakes++;
+            updateMistakeCounter();
+            input.focus();
+            return false;
+          }
+          index++;
+        }
+      }
+
+      window.difficulty = difficulty;
+      handleCorrectAnswer(mistakes);
+    };
+
+    document.querySelector(".btn-comprovar").addEventListener("click", checkAnswer);
+
+  } catch (err) {
+    console.error("Error loading daily puzzle:", err);
+  }
+}
+
+loadDailyPuzzle();
+
+</script>
+<footer>
+  <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+</footer>
+</body>
+</html>

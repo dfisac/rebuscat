@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="favicon.png" type="image/png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arxiu</title>
+<style>
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  h1 { text-align: center; }
+  main { flex: 1; }
+  .calendar-container,
+  .puzzle-container {
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .calendar-container {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  }
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .calendar-header button {
+    background: #4CAF50;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  .calendar-header span {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .day {
+  padding: 0.5vw;
+  text-align: center;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* Add this: */
+.day:not(.unavailable) {
+  cursor: pointer;
+}
+.day:not(.unavailable):hover {
+  background-color: #ffd700; /* slightly brighter on hover */
+}
+  .weekday {
+    font-weight: bold;
+    background: #eee;
+  }
+  .puzzle-container {
+    margin-top: 2rem;
+    padding-bottom: 80px;
+  }
+  .word-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .word {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+  }
+  input.letter-box {
+    width: clamp(1.7ch, 5vw, 2ch);      
+    height: clamp(2rem, 7vw, 3rem); 
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: monospace;
+    vertical-align: middle;
+  }
+  .letter-box.symbol {
+    line-height: 1;
+    padding-top: 0em;
+  }
+  .btn-comprovar {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1rem, 6vw, 2rem);
+    padding: 0.75vw 2vw;
+    margin-top: -0.5rem;
+    margin-bottom: 0rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 2vw;
+    background: linear-gradient(90deg, #ff7f50, #ffb347);
+    color: white;
+    transition: transform 0.2s, opacity 0.3s;
+    display: block;
+    margin: 1rem auto; /* centers horizontally */
+}
+  .btn-comprovar:hover {
+    background-color: darkorange;
+  }
+  .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    -webkit-text-stroke: 2px black;
+    border: 3px solid white;
+    border-radius: 8px;
+    box-sizing: border-box;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    padding: 1rem 2rem;
+  }
+  footer {
+    background: linear-gradient(90deg, #ff7f50, #ffb347); /* same gradient as header */
+    height: 55px; /* slightly shorter than header */
+    width: 100%;
+    box-shadow: 0 -8px 8px rgba(0,0,0,0.15); /* subtle shadow on top */
+    border-top: 0px solid rgba(255,255,255,0.3);
+    box-sizing: border-box;
+     font-size: clamp(10px, 4vw, 1.5rem);
+     font-family: 'Caveat', cursive;
+     margin-top:auto;
+     
+  
+}
+
+  /* 🔹 Rebus left-aligned difficulty styles */
+  .rebus-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .rebus-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 90%;
+    max-width: 600px;
+  }
+  .rebus-image {
+    width: 100%;
+    height: auto;
+    margin-bottom: 0.5rem;
+  }
+  #difficultyDisplay {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: #555;
+    margin: 0 0 1rem 0;
+    font-family: 'Caveat', cursive;
+    text-align: left;
+  }
+  h1 { 
+      text-align: center; 
+      font-family: 'Caveat', cursive; /* optional for header */
+      font-size: clamp(2rem, 6vw, 3rem);
+    }
+
+    /* ✅ Apply Caveat to calendar */
+    .calendar-container,
+    .calendar-header span,
+    .calendar .day,
+    .calendar .weekday {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(1.3rem, 2vw, 1.2rem);
+    }
+
+    .calendar-header button {
+      font-family: 'Caveat', cursive;
+    }
+</style>
+</head>
+<body>
+  <div id="header"></div>
+  <script type="module" src="load-header.js"></script>
+
+<main>
+<h1>Arxiu</h1>
+
+<div class="calendar-container">
+  <div class="calendar-header">
+    <button id="prevMonth">&lt;</button>
+    <span id="monthYear"></span>
+    <button id="nextMonth">&gt;</button>
+  </div>
+  <div class="calendar" id="calendar"></div>
+</div>
+
+<div id="puzzleArea" class="puzzle-container"></div>
+
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+let puzzleFiles = [];
+let puzzleDates = [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let currentUser = null;
+let solvedDates = {};
+
+const monthNames = ["Gener","Febrer","Març","Abril","Maig","Juny",
+                    "Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (user) {
+    await loadPuzzleList();       // load puzzle list first
+    await loadSolvedDates();      // wait until solvedDates is filled
+    generateCalendar(currentYear, currentMonth);  // only then draw calendar
+  } else {
+    await loadPuzzleList();       // still load puzzles for unauthenticated users
+    generateCalendar(currentYear, currentMonth);
+  }
+});
+
+
+async function loadSolvedDates() {
+  if (!currentUser) return;
+  solvedDates = {};
+  for (let dateStr of puzzleDates) {
+    const ref = doc(db, "users", currentUser.uid, "stats", dateStr);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      solvedDates[dateStr] = snap.data(); // store full stats (mistakes, difficulty, etc.)
+    }
+  }
+}
+
+
+async function saveMistakesPast(dateStr, mistakes, difficulty) {
+  if (!currentUser) return;
+  try {
+    const ref = doc(db, "users", currentUser.uid, "stats", dateStr);
+    const snap = await getDoc(ref);
+    if (snap.exists()) return;
+    await setDoc(ref, { date: dateStr, mistakes, difficulty: difficulty ?? null });
+    solvedDates[dateStr] = true;
+    generateCalendar(currentYear, currentMonth);
+  } catch (err) {
+    console.error("Error saving past puzzle:", err);
+  }
+}
+
+async function loadPuzzleList() {
+  const res = await fetch("puzzles.json");
+  puzzleFiles = await res.json();
+  puzzleDates = puzzleFiles.map(f => f.split("_").slice(0,3).join("-"));
+  // remove generateCalendar here
+}
+
+function generateCalendar(year, month) {
+  const calendar = document.getElementById('calendar');
+  const monthYearLabel = document.getElementById('monthYear');
+  calendar.innerHTML = '';
+  monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+
+  const weekdays = ["Dl.","Dt.","Dc.","Dj.","Dv.","Ds.","Dg."];
+  weekdays.forEach(day => {
+    const weekdayDiv = document.createElement('div');
+    weekdayDiv.textContent = day;
+    weekdayDiv.classList.add('weekday');
+    calendar.appendChild(weekdayDiv);
+  });
+
+  let firstDay = new Date(year, month, 1).getDay();
+  firstDay = (firstDay + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  for (let i = 0; i < firstDay; i++) {
+    calendar.appendChild(document.createElement('div'));
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayDiv = document.createElement('div');
+    dayDiv.textContent = day;
+    const dateObj = new Date(dateStr); dateObj.setHours(0,0,0,0);
+
+    if (puzzleDates.includes(dateStr) && dateObj <= today) {
+      dayDiv.classList.add('day');
+      if (solvedDates[dateStr]) {
+        dayDiv.style.background = "#4CAF50";
+        dayDiv.style.color = "white";
+      } else {
+        dayDiv.style.background = "rgb(255, 196, 0)";
+        dayDiv.style.color = "black";
+      }
+      dayDiv.onclick = () => showPuzzle(dateStr);
+    } else {
+      dayDiv.classList.add('day', 'unavailable');
+    }
+    calendar.appendChild(dayDiv);
+  }
+}
+
+function showPuzzle(dateStr) {
+  const file = puzzleFiles.find(f => f.startsWith(dateStr.replace(/-/g,"_")));
+  if (!file) return;
+  
+  const container = document.getElementById('puzzleArea');
+  container.innerHTML = "";
+
+  // 🔹 Left-aligned wrapper
+  const rebusWrapper = document.createElement("div");
+  rebusWrapper.className = "rebus-wrapper";
+
+  const rebusContainer = document.createElement("div");
+  rebusContainer.className = "rebus-container";
+
+  const img = document.createElement('img');
+  img.src = file;
+  img.className = "rebus-image";
+
+  rebusContainer.appendChild(img);
+
+  const nameWithoutExt = file.replace(/\.[^/.]+$/, "");
+  const parts = nameWithoutExt.split("_");
+  const difficultyPart = parts[parts.length - 1];
+  const difficulty = difficultyPart.replace("DIF", "");
+  const correctAnswer = parts.slice(3, -1).map(w => w.toUpperCase());
+
+  const diffLabel = document.createElement("div");
+  diffLabel.id = "difficultyDisplay";
+  diffLabel.textContent = `dificultat: ${difficulty}/5`;
+  rebusContainer.appendChild(diffLabel);
+
+  rebusWrapper.appendChild(rebusContainer);
+  container.appendChild(rebusWrapper);
+
+  const wordInputsContainer = document.createElement('div');
+  wordInputsContainer.className = "word-inputs";
+  const allInputs = [];
+
+  correctAnswer.forEach(word => {
+    const wordDiv = document.createElement('div');
+    wordDiv.className = "word";
+    for (let letter of word) {
+      if (letter === "'" || letter === "-") {
+        const symbol = document.createElement('span');
+        symbol.textContent = letter;
+        symbol.style.fontSize = "1.5rem";
+        symbol.style.margin = "0 0.25rem";
+        wordDiv.appendChild(symbol);
+        continue;
+      }
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 1;
+      input.className = "letter-box";
+      input.dataset.solution = letter;
+      input.autocomplete = "off";
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key.length === 1 && /[a-zA-ZÀ-ÿ]/.test(e.key)) {
+          e.preventDefault();
+          input.value = e.key.toUpperCase();
+          const nextIndex = allInputs.indexOf(input) + 1;
+          if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+        } else if (e.key === "Backspace") {
+          e.preventDefault();
+          if (input.value === "") {
+            const prevIndex = allInputs.indexOf(input) - 1;
+            if (prevIndex >= 0) {
+              allInputs[prevIndex].value = "";
+              allInputs[prevIndex].focus();
+            }
+          } else {
+            input.value = "";
+          }
+        } else if (e.key === " ") {
+          e.preventDefault();
+        }
+      });
+
+      allInputs.push(input);
+      wordDiv.appendChild(input);
+    }
+    wordInputsContainer.appendChild(wordDiv);
+  });
+
+  // 🔹 Counter FIRST
+  let mistakes = 0;
+  const mistakeCounter = document.createElement("div");
+  mistakeCounter.id = "mistakeCounter";
+  mistakeCounter.style.cssText = `
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    background-color: #ffb347;
+    color: white;
+    margin: 1rem auto;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3vw;
+    width: fit-content;
+    text-align: center;
+  `;
+  mistakeCounter.textContent = "Errors: 0";
+  container.appendChild(mistakeCounter);
+
+  // 🔹 Then inputs
+  container.appendChild(wordInputsContainer);
+
+  function updateMistakeCounter() {
+    const counter = document.getElementById("mistakeCounter");
+    counter.textContent = `Errors: ${mistakes}`;
+    const startColor = { r: 255, g: 196, b: 0 };
+    const endColor   = { r: 204, g: 0, b: 0 };
+    let t = mistakes / 5;
+    if (t > 1) t = 1;
+    const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
+    const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
+    const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+    counter.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+  }
+
+  window.updateMistakeCounter = updateMistakeCounter;
+
+  if (solvedDates[dateStr]) {
+    // Fill inputs with the correct solution
+    allInputs.forEach(inp => {
+      inp.value = inp.dataset.solution;
+      inp.disabled = true;
+    });
+
+    // 🔹 Show saved mistake count
+    const savedMistakes = solvedDates[dateStr].mistakes ?? 0;
+    mistakeCounter.textContent = `Errors: ${savedMistakes}`;
+    mistakes = savedMistakes; // so counter color matches
+    updateMistakeCounter();
+
+    const solvedMsg = document.createElement("p");
+    solvedMsg.textContent = "✅ Ja has resolt aquest enigma. Els dies verds són els que has resolt, prova amb els grocs.";
+    solvedMsg.style.color = "green";
+    solvedMsg.style.fontFamily = "'Caveat', cursive";
+    solvedMsg.style.fontSize = "1.5rem";
+
+    container.appendChild(solvedMsg);
+    return;
+  }
+
+  const btn = document.createElement('button');
+  btn.textContent = "Comprovar";
+  btn.className = "btn-comprovar";
+  btn.onclick = checkAnswer;
+  container.appendChild(btn);
+
+  function checkAnswer() {
+    const isCorrect = allInputs.every(inp => inp.value.toUpperCase() === inp.dataset.solution);
+    if (isCorrect) {
+      updateMistakeCounter();
+      showPopup("Correcte!", true);
+      saveMistakesPast(dateStr, mistakes, difficulty);
+
+      // 🔹 Disable inputs
+      allInputs.forEach(inp => inp.disabled = true);
+
+      // 🔹 Replace button with success message
+      btn.remove(); 
+      const solvedMsg = document.createElement("p");
+      solvedMsg.textContent = "✅ Ja has resolt aquest enigma. Els dies verds són els que has resolt, prova amb els grocs.";
+      solvedMsg.style.color = "green";
+      solvedMsg.style.fontWeight = "bold";
+      solvedMsg.style.textAlign = "center";
+      container.appendChild(solvedMsg);
+
+    } else {
+      mistakes++;
+      updateMistakeCounter();
+      showPopup("Incorrecte!", false);
+    }
+  }
+
+  allInputs.forEach(input => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkAnswer();
+      }
+    });
+  });
+}
+
+
+function showPopup(message, correct) {
+  const overlay = document.createElement('div');
+  overlay.className = 'popup-overlay';
+  overlay.style.borderColor = correct ? 'lime' : 'red';
+  overlay.textContent = message;
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 500);
+  }, 2000);
+}
+
+document.getElementById('prevMonth').onclick = () => {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  generateCalendar(currentYear, currentMonth);
+};
+document.getElementById('nextMonth').onclick = () => {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  generateCalendar(currentYear, currentMonth);
+};
+
+loadPuzzleList();
+</script>
+</main>
+<footer>
+  <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+</footer>
+</body>
+</html>

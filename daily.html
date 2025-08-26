@@ -646,27 +646,25 @@ async function loadDailyPuzzle() {
           input.dataset.solution = char;
           input.autocomplete = "off";
 
-          input.addEventListener("keydown", (e) => {
-            if (e.key.length === 1 && /[a-zA-ZÀ-ÿ]/.test(e.key)) {
-              e.preventDefault();
-              input.value = e.key.toUpperCase();
-              const nextIndex = allInputs.indexOf(input) + 1;
-              if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
-            } else if (e.key === "Backspace") {
-              e.preventDefault();
-              if (input.value === "") {
-                const prevIndex = allInputs.indexOf(input) - 1;
-                if (prevIndex >= 0) {
-                  allInputs[prevIndex].value = "";
-                  allInputs[prevIndex].focus();
-                }
-              } else {
-                input.value = "";
-              }
-            } else if (e.key === " ") {
-              e.preventDefault(); // ignore spaces
-            }
-          });
+          input.addEventListener("input", (e) => {
+  const value = input.value.toUpperCase();
+  input.value = value;
+
+  if (value.length === 1) {
+    const nextIndex = allInputs.indexOf(input) + 1;
+    if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+  }
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace" && input.value === "") {
+    const prevIndex = allInputs.indexOf(input) - 1;
+    if (prevIndex >= 0) {
+      allInputs[prevIndex].value = "";
+      allInputs[prevIndex].focus();
+    }
+  }
+});
 
           allInputs.push(input);
           wordDiv.appendChild(input);

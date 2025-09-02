@@ -501,13 +501,15 @@ input.addEventListener("keydown", (e) => {
     const solvedMsg = document.createElement("p");
     if (currentUser) {
       solvedMsg.textContent = "Felicitats, l'has resolt! Els dies verds són els que has resolt, prova amb els grocs.";
+      solvedMsg.style.color = "green";
+      solvedMsg.style.fontFamily = "'Caveat', cursive";
+      solvedMsg.style.fontSize = "1.5rem";
     } else {
       solvedMsg.textContent = "Felicitats, l'has resolt!";
+      solvedMsg.style.color = "green";
+      solvedMsg.style.fontFamily = "'Caveat', cursive";
+      solvedMsg.style.fontSize = "1.5rem";
     }
-
-    solvedMsg.style.color = "green";
-    solvedMsg.style.fontWeight = "bold";
-    solvedMsg.style.textAlign = "center";
     container.appendChild(solvedMsg);
 
   } else {

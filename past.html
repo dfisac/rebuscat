@@ -482,30 +482,41 @@ input.addEventListener("keydown", (e) => {
   container.appendChild(btn);
 
   function checkAnswer() {
-    const isCorrect = allInputs.every(inp => inp.value.toUpperCase() === inp.dataset.solution);
-    if (isCorrect) {
-      updateMistakeCounter();
-      showPopup("Correcte!", true);
+  const isCorrect = allInputs.every(inp => inp.value.toUpperCase() === inp.dataset.solution);
+  if (isCorrect) {
+    updateMistakeCounter();
+    showPopup("Correcte!", true);
+
+    if (currentUser) {
       saveMistakesPast(dateStr, mistakes, difficulty);
-
-      // 🔹 Disable inputs
-      allInputs.forEach(inp => inp.disabled = true);
-
-      // 🔹 Replace button with success message
-      btn.remove(); 
-      const solvedMsg = document.createElement("p");
-      solvedMsg.textContent = "✅ Ja has resolt aquest enigma. Els dies verds són els que has resolt, prova amb els grocs.";
-      solvedMsg.style.color = "green";
-      solvedMsg.style.fontWeight = "bold";
-      solvedMsg.style.textAlign = "center";
-      container.appendChild(solvedMsg);
-
-    } else {
-      mistakes++;
-      updateMistakeCounter();
-      showPopup("Incorrecte!", false);
     }
+
+    // Disable inputs
+    allInputs.forEach(inp => inp.disabled = true);
+
+    // Remove button
+    btn.remove(); 
+
+    // Show appropriate message
+    const solvedMsg = document.createElement("p");
+    if (currentUser) {
+      solvedMsg.textContent = "✅ Ja has resolt aquest enigma. Els dies verds són els que has resolt, prova amb els grocs.";
+    } else {
+      solvedMsg.textContent = "Felicitats, l'has resolt!";
+    }
+
+    solvedMsg.style.color = "green";
+    solvedMsg.style.fontWeight = "bold";
+    solvedMsg.style.textAlign = "center";
+    container.appendChild(solvedMsg);
+
+  } else {
+    mistakes++;
+    updateMistakeCounter();
+    showPopup("Incorrecte!", false);
   }
+}
+
 
   allInputs.forEach(input => {
     input.addEventListener("keydown", (e) => {

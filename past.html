@@ -365,52 +365,56 @@ function showPuzzle(dateStr) {
   wordInputsContainer.className = "word-inputs";
   const allInputs = [];
 
-  correctAnswer.forEach(word => {
-    const wordDiv = document.createElement('div');
-    wordDiv.className = "word";
-    for (let letter of word) {
-      if (letter === "'" || letter === "-") {
-        const symbol = document.createElement('span');
-        symbol.textContent = letter;
-        symbol.style.fontSize = "1.5rem";
-        symbol.style.margin = "0 0.25rem";
-        wordDiv.appendChild(symbol);
-        continue;
-      }
-      const input = document.createElement("input");
-      input.type = "text";
-      input.maxLength = 1;
-      input.className = "letter-box";
-      input.dataset.solution = letter;
-      input.autocomplete = "off";
+  correctAnswer.forEach((word, i) => {
+      const wordDiv = document.createElement("div");
+      wordDiv.className = "word";
+      wordDiv.id = `word${i + 1}`;
 
-      input.addEventListener("keydown", (e) => {
-        if (e.key.length === 1 && /[a-zA-ZÀ-ÿ]/.test(e.key)) {
-          e.preventDefault();
-          input.value = e.key.toUpperCase();
-          const nextIndex = allInputs.indexOf(input) + 1;
-          if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
-        } else if (e.key === "Backspace") {
-          e.preventDefault();
-          if (input.value === "") {
-            const prevIndex = allInputs.indexOf(input) - 1;
-            if (prevIndex >= 0) {
-              allInputs[prevIndex].value = "";
-              allInputs[prevIndex].focus();
-            }
-          } else {
-            input.value = "";
-          }
-        } else if (e.key === " ") {
-          e.preventDefault();
-        }
-      });
+      for (let j = 0; j < word.length; j++) {
+        const char = word[j];
+        if (/[A-ZÀ-Ý]/.test(char)) {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.maxLength = 1;
+          input.className = "letter-box";
+          input.dataset.solution = char;
+          input.autocomplete = "off";
 
-      allInputs.push(input);
-      wordDiv.appendChild(input);
+          input.addEventListener("input", (e) => {
+  const value = input.value.toUpperCase();
+  input.value = value;
+
+  if (value.length === 1) {
+    const nextIndex = allInputs.indexOf(input) + 1;
+    if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+  }
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace" && input.value === "") {
+    const prevIndex = allInputs.indexOf(input) - 1;
+    if (prevIndex >= 0) {
+      allInputs[prevIndex].value = "";
+      allInputs[prevIndex].focus();
     }
-    wordInputsContainer.appendChild(wordDiv);
-  });
+  }
+});
+
+          allInputs.push(input);
+          wordDiv.appendChild(input);
+        } else if (char === "'" || char === "-") {
+          const span = document.createElement("span");
+          span.textContent = char;
+          span.style.fontSize = "4vw";
+          span.style.lineHeight = "3vw";
+          span.style.fontFamily = "monospace";
+          span.className = "letter-box symbol"; 
+          wordDiv.appendChild(span);
+        }
+      }
+
+      wordInputsContainer.appendChild(wordDiv);
+    });
 
   // 🔹 Counter FIRST
   let mistakes = 0;

@@ -316,39 +316,8 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
-/* 🔹 Primera vegada modal */
-#firstTimeModal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-}
-#firstTimeModal .modal-box {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  text-align: center;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-  animation: scaleUp 0.25s ease;
-}
-#firstTimeModal h2 {
-  font-family: 'Caveat', cursive;
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #333;
-}
-#firstTimeModal img {
-  max-width: 220px;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: transform 0.2s;
-}
-#firstTimeModal img:hover {
-  transform: scale(1.05);
-}
+
+
 </style>
 </head>
 <body>
@@ -380,14 +349,6 @@
         Estadístiques personals
       </button>
     </div>
-  </div>
-</div>
-
-<!-- Primera vegada modal -->
-<div id="firstTimeModal">
-  <div class="modal-box">
-    <h2>Primera vegada?</h2>
-    <img src="arxiu.png" alt="Arxiu" id="firstTimeImage">
   </div>
 </div>
 
@@ -440,13 +401,10 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  async function checkIfSolvedTodayOrFirstTime() {
-    if (!currentUser) {
-      document.getElementById("firstTimeModal").style.display = "flex";
-      return;
-    }
+  async function checkIfSolvedToday() {
+    if (!currentUser) return;
 
-    const today = getLocalToday();
+    const today = getLocalToday(); // use local date
     const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
     const statSnap = await getDoc(statDocRef);
 
@@ -464,8 +422,6 @@
 
       mistakes = mistakesToday;
       updateMistakeCounter();
-    } else {
-      document.getElementById("firstTimeModal").style.display = "flex";
     }
   }
 
@@ -477,12 +433,10 @@
     }
 
     if (user) {
-      await checkIfSolvedTodayOrFirstTime();
+      await checkIfSolvedToday();
       if (window.location.pathname.endsWith("index.html")) {
         window.location.href = "view-stats.html";
       }
-    } else {
-      document.getElementById("firstTimeModal").style.display = "flex";
     }
   });
 
@@ -501,76 +455,295 @@
         mistakes: mistakesCount,
         difficulty: difficulty ?? null 
       });
-      console.log("Mistakes saved successfully:", mistakesCount);
     } catch (error) {
       console.error("Error saving mistakes:", error);
     }
   }
 
-  function addKeepPlayingButton(fromStatsModal) {
-    let existingBtn = document.getElementById("keepPlayingBtn");
-    if (!existingBtn) {
-      let btn = document.createElement("button");
-      btn.id = "keepPlayingBtn";
-      btn.textContent = "Segueix jugant";
-      btn.onclick = () => {
-        document.getElementById("loginModal").style.display = "none";
-        puzzleLocked = false;
-      };
-      document
-        .getElementById("modalStatsSection")
-        .appendChild(btn);
-    }
-  }
-
   document.getElementById("loginBtn").addEventListener("click", async () => {
-    const email = document.getElementById("loginEmail").value;
-    const pass = document.getElementById("loginPassword").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const errBox = document.getElementById("loginError");
+    errBox.textContent = "";
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      document.getElementById("loginModal").style.display = "none";
-    } catch (e) {
-      document.getElementById("loginError").textContent = e.message;
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      errBox.textContent = err.message;
     }
   });
 
   document.getElementById("signupBtn").addEventListener("click", async () => {
-    const email = document.getElementById("loginEmail").value;
-    const pass = document.getElementById("loginPassword").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const errBox = document.getElementById("loginError");
+    errBox.textContent = "";
     try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-      document.getElementById("loginModal").style.display = "none";
-    } catch (e) {
-      document.getElementById("loginError").textContent = e.message;
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      errBox.textContent = err.message;
     }
   });
 
   document.getElementById("cancelLogin").addEventListener("click", () => {
-    document.getElementById("loginModal").style.display = "none";
+    window.location.href = "past.html";
   });
 
   document.getElementById("viewStatsBtn").addEventListener("click", () => {
     window.location.href = "view-stats.html";
   });
 
-  // ✅ Primera vegada modal behavior
-  document.getElementById("firstTimeModal").addEventListener("click", (e) => {
-    if (e.target.id === "firstTimeModal") {
-      document.getElementById("firstTimeModal").style.display = "none";
+  function addKeepPlayingButton(isLoggedIn) {
+    if (isLoggedIn) {
+      const statsSection = document.getElementById("modalStatsSection");
+      let keepBtn = document.getElementById("keepPlayingBtn");
+      if (!keepBtn) {
+        keepBtn = document.createElement("button");
+        keepBtn.id = "keepPlayingBtn";
+        keepBtn.textContent = "Seguir jugant (arxiu)";
+        keepBtn.style.background = "orange";
+        keepBtn.style.color = "white";
+        keepBtn.style.padding = "8px";
+        keepBtn.style.width = "70%";
+        keepBtn.style.marginTop = "5px";
+        keepBtn.onclick = () => (window.location.href = "past.html");
+        statsSection.appendChild(keepBtn);
+      }
+    }
+  }
+
+  function revealSolution() {
+  document.querySelectorAll("input.letter-box").forEach((input) => {
+    if (input.dataset.solution) {
+      input.value = input.dataset.solution;
+    }
+    input.readOnly = true;
+  });
+
+  puzzleLocked = true;
+
+  // ✅ Hide the button and mistake counter
+  const btn = document.querySelector(".btn-comprovar");
+  if (btn) btn.style.display = "none";
+
+  const counter = document.getElementById("mistakeCounter");
+  if (counter) counter.style.display = "none";
+}
+
+
+  document.getElementById("loginModal").addEventListener("click", (e) => {
+    if (e.target.id === "loginModal") {
+      document.getElementById("loginModal").style.display = "none";
+      revealSolution();
     }
   });
-  document.getElementById("firstTimeImage").addEventListener("click", () => {
-    window.location.href = "normes.html";
-  });
 
-  // Date update
-  const dies = ["Diumenge","Dilluns","Dimarts","Dimecres","Dijous","Divendres","Dissabte"];
-  const mesos = ["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"];
-  const avui = new Date();
-  const textData = `${dies[avui.getDay()]}, ${avui.getDate()} ${mesos[avui.getMonth()]} de ${avui.getFullYear()}`;
-  document.getElementById("data-ampli").textContent = textData;
+  window.handleCorrectAnswer = function (mistakes) {
+    const messageText = `Felicitats! L'has resolt en ${mistakes} error${mistakes !== 1 ? "s" : ""}.`;
+    document.getElementById("mistakeMessage").textContent = messageText;
+
+    if (currentUser) {
+      document.getElementById("modalLoginSection").style.display = "none";
+      document.getElementById("modalStatsSection").style.display = "block";
+      saveMistakesDaily(mistakes, difficulty);   // ← uses local date
+      addKeepPlayingButton(true);
+    } else {
+      document.getElementById("modalLoginSection").style.display = "block";
+      document.getElementById("modalStatsSection").style.display = "none";
+      pendingResult = { mistakes, difficulty };
+      document.getElementById("cancelLogin").textContent = "Seguir jugant (arxiu)";
+      document.getElementById("cancelLogin").style.background = "#ff9800";
+      document.getElementById("cancelLogin").onclick = () =>
+        (window.location.href = "past.html");
+    }
+
+    document.getElementById("loginModal").style.display = "flex";
+    mistakes = 0;
+    updateMistakeCounter();
+    document.getElementById("rebusForm").reset();
+    document.getElementById("word1letter1").focus();
+  };
 </script>
 
-<footer></footer>
+<form id="rebusForm">
+  <div class="word-inputs" id="wordInputsContainer"></div>
+  <button type="submit" class="btn-comprovar">Comprovar</button>
+</form>
+
+<script>
+function mostraData() {
+  const avui = new Date();
+  const optAmpli = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  document.getElementById("data-ampli").textContent = avui.toLocaleDateString("ca-ES", optAmpli);
+}
+mostraData();
+
+
+async function loadDailyPuzzle() {
+  // Use local date instead of UTC
+  function getTodayStrUnderscore() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0"); // zero-pad month
+    const dd = String(today.getDate()).padStart(2, "0");      // zero-pad day
+    return `${yyyy}_${mm}_${dd}`;
+  }
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0"); // zero-pad month
+  const dd = String(today.getDate()).padStart(2, "0");      // zero-pad day
+  const todayStrUnderscore = `${yyyy}_${mm}_${dd}`;
+
+  try {
+    const res = await fetch("puzzles.json");
+    const files = await res.json();
+    const todayFile = files.find(f => f.startsWith(todayStrUnderscore));
+    if (!todayFile) {
+      console.error("No puzzle found for today:", todayStrUnderscore);
+      document.querySelector(".rebus-image").src = "no-puzzle.png";
+      return;
+    }
+
+    document.querySelector(".rebus-image").src = todayFile;
+
+    const nameWithoutExt = todayFile.replace(/\.[^/.]+$/, "");
+    const parts = nameWithoutExt.split("_");
+
+    // 🔹 Extract difficulty from last part "DIFX"
+    let difficulty = null;
+    const lastPart = parts[parts.length - 1];
+    const match = lastPart.match(/^DIF([1-5])$/);
+    if (match) {
+      difficulty = parseInt(match[1], 10);
+    }
+
+    if (difficulty) {
+      document.getElementById("difficultyDisplay").textContent =
+        `dificultat: ${difficulty}/5`;
+    }
+
+    const correctAnswer = parts.slice(3, parts.length - 1).map(w => w.toUpperCase());
+    const wordLengths = correctAnswer.map(w => w.length);
+    let mistakes = 0;
+
+    const wordInputsContainer = document.getElementById("wordInputsContainer");
+    wordInputsContainer.innerHTML = "";
+
+    const allInputs = [];
+
+    correctAnswer.forEach((word, i) => {
+      const wordDiv = document.createElement("div");
+      wordDiv.className = "word";
+      wordDiv.id = `word${i + 1}`;
+
+      for (let j = 0; j < word.length; j++) {
+        const char = word[j];
+        if (/[A-ZÀ-Ý]/.test(char)) {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.maxLength = 1;
+          input.className = "letter-box";
+          input.dataset.solution = char;
+          input.autocomplete = "off";
+
+          input.addEventListener("input", (e) => {
+  const value = input.value.toUpperCase();
+  input.value = value;
+
+  if (value.length === 1) {
+    const nextIndex = allInputs.indexOf(input) + 1;
+    if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+  }
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace" && input.value === "") {
+    const prevIndex = allInputs.indexOf(input) - 1;
+    if (prevIndex >= 0) {
+      allInputs[prevIndex].value = "";
+      allInputs[prevIndex].focus();
+    }
+  }
+});
+
+          allInputs.push(input);
+          wordDiv.appendChild(input);
+        } else if (char === "'" || char === "-") {
+          const span = document.createElement("span");
+          span.textContent = char;
+          span.style.fontSize = "4vw";
+          span.style.lineHeight = "3vw";
+          span.style.fontFamily = "monospace";
+          span.className = "letter-box symbol"; 
+          wordDiv.appendChild(span);
+        }
+      }
+
+      wordInputsContainer.appendChild(wordDiv);
+    });
+
+    function updateMistakeCounter() {
+      const counter = document.getElementById("mistakeCounter");
+      counter.textContent = `Errors: ${mistakes}`;
+
+      const startColor = { r: 255, g: 200, b: 0 }; 
+      const endColor   = { r: 204, g: 0, b: 0 };   
+
+      let t = mistakes / 5;       
+      if (t > 1) t = 1;           
+
+      const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
+      const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
+      const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+
+      counter.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    }
+
+    window.updateMistakeCounter = updateMistakeCounter;
+
+    window.checkAnswer = function(e) {
+      e.preventDefault();
+
+      for (const input of allInputs) {
+        if (!input.value) {
+          alert("Pleneu totes les lletres!");
+          input.focus();
+          return false;
+        }
+      }
+
+      let index = 0;
+      for (let i = 0; i < correctAnswer.length; i++) {
+        for (let j = 0; j < correctAnswer[i].length; j++) {
+          const char = correctAnswer[i][j];
+          if (char === "'" || char === "-") continue;
+          const input = allInputs[index];
+          if (input.value.toUpperCase() !== char) {
+            mistakes++;
+            updateMistakeCounter();
+            input.focus();
+            return false;
+          }
+          index++;
+        }
+      }
+
+      window.difficulty = difficulty;
+      handleCorrectAnswer(mistakes);
+    };
+
+    document.querySelector(".btn-comprovar").addEventListener("click", checkAnswer);
+
+  } catch (err) {
+    console.error("Error loading daily puzzle:", err);
+  }
+}
+
+loadDailyPuzzle();
+
+</script>
+<footer>
+  <p>&nbsp;&nbsp;© 2025 RebusCAT.</p> 
+</footer>
 </body>
 </html>

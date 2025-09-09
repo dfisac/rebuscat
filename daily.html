@@ -516,13 +516,6 @@ welcomeImg.addEventListener("click", () => {
   window.location.href = "normes.html";
 });
 
-// Clicking outside image closes popup
-welcomePopup.addEventListener("click", (e) => {
-  if (e.target === welcomePopup) {
-    welcomePopup.style.display = "none";
-  }
-});
-
 
 
   async function saveMistakesDaily(mistakesCount, difficulty) {

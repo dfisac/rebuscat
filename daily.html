@@ -316,6 +316,31 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
+/* 🔹 Fullscreen overlay (transparent) */
+#firstVisitPopup {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.0); /* invisible background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000; /* above everything */
+}
+
+/* 🔹 The image itself */
+#firstVisitPopup img {
+  width: 300px; /* adjust size as needed */
+  max-width: 80vw;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+/* 🔹 Zoom on hover */
+#firstVisitPopup img:hover {
+  transform: scale(1.1);
+}
 
 
 </style>
@@ -323,6 +348,10 @@
 <body>
 <div id="header"></div>
 <script type="module" src="load-header.js"></script>
+  <!-- 🔹 First-visit popup -->
+<div id="firstVisitPopup">
+  <img src="comjugar.png" id="popupImage" alt="Com Jugar">
+</div>
 
 <!-- Login/Stats Modal -->
 <div id="loginModal">
@@ -426,19 +455,45 @@
   }
 
   onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user && pendingResult !== null) {
-      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-      pendingResult = null;
-    }
+  currentUser = user;
+  if (user && pendingResult !== null) {
+    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+    pendingResult = null;
+  }
 
-    if (user) {
-      await checkIfSolvedToday();
-      if (window.location.pathname.endsWith("index.html")) {
-        window.location.href = "view-stats.html";
-      }
+  if (user) {
+    await checkIfSolvedToday(); // check if already solved
+    // 👇 If no stats found, show popup
+    const today = getLocalToday();
+    const statDocRef = doc(db, "users", user.uid, "stats", today);
+    const statSnap = await getDoc(statDocRef);
+    if (!statSnap.exists()) {
+      showFirstVisitPopup();
     }
-  });
+  } else {
+    // 👇 Not logged in, show popup
+    showFirstVisitPopup();
+  }
+});
+
+
+  // 🔹 Handle popup display
+function showFirstVisitPopup() {
+  document.getElementById("firstVisitPopup").style.display = "flex";
+}
+
+// Close popup if clicking outside the image
+document.getElementById("firstVisitPopup").addEventListener("click", (e) => {
+  if (e.target.id === "firstVisitPopup") {
+    document.getElementById("firstVisitPopup").style.display = "none";
+  }
+});
+
+// Redirect to normes.html if clicking image
+document.getElementById("popupImage").addEventListener("click", () => {
+  window.location.href = "normes.html";
+});
+
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;

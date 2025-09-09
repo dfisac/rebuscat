@@ -318,22 +318,16 @@
 
   /* Fullscreen welcome popup */
 #welcomePopup {
-  display: none; /* hidden by default */
+  display: flex;               /* always in DOM flow */
+  opacity: 0;                  /* hidden by default */
+  pointer-events: none;        /* no clicks when hidden */
   position: fixed;
   top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(128,128,128,0.7); /* grey transparent */
+  width: 100%; height: 100%;
+  background: rgba(128,128,128,0.7);
   z-index: 10000;
-  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-#welcomePopup {
-  display: flex;
-  opacity: 0;
-  pointer-events: none;
   transition: opacity 0.5s ease;
 }
 
@@ -341,6 +335,7 @@
   opacity: 1;
   pointer-events: all;
 }
+
 
 /* Image inside popup */
 #welcomePopup img {
@@ -481,33 +476,36 @@
       window.location.href = "view-stats.html";
     }
   } else {
-    // ✅ only if NOT logged in
     setTimeout(() => {
       showWelcomePopupIfNeeded();
     }, 1000);
   }
 });
 
+
   async function showWelcomePopupIfNeeded() {
-  // Only show if user is NOT logged in
   if (!currentUser) {
-    document.getElementById("welcomePopup").style.display = "flex";
+    document.getElementById("welcomePopup").classList.add("visible");
     return;
   }
 
   try {
-    // Check if the user document exists
     const userRef = doc(db, "users", currentUser.uid);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      // No user file → show welcome
-    //  document.getElementById("welcomePopup").style.display = "flex";
+      document.getElementById("welcomePopup").classList.add("visible");
     }
   } catch (err) {
     console.error("Error checking user doc:", err);
   }
 }
+welcomePopup.addEventListener("click", (e) => {
+  if (e.target === welcomePopup) {
+    welcomePopup.classList.remove("visible");
+  }
+});
+
 
 
 // Handle popup interactions

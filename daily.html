@@ -316,40 +316,6 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
-  /* Fullscreen welcome popup */
-#welcomePopup {
-  display: flex;               /* always in DOM flow */
-  opacity: 0;                  /* hidden by default */
-  pointer-events: none;        /* no clicks when hidden */
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(128,128,128,0.7);
-  z-index: 10000;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.5s ease;
-}
-
-#welcomePopup.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-
-
-/* Image inside popup */
-#welcomePopup img {
-  width: 70%; /* same width as your login modal */
-  max-width: 380px;
-  transition: transform 0.3s ease;
-  cursor: pointer;
-}
-
-/* Hover zoom effect */
-#welcomePopup img:hover {
-  transform: scale(1.05);
-}
-
 
 
 </style>
@@ -397,10 +363,6 @@
     <div id="difficultyDisplay"></div>
     <div id="mistakeCounter" style="background-color: #ffb347; color: white;">Errors: 0</div>
   </div>
-</div>
-
-<div id="welcomePopup">
-  <img src="comjugar.png" alt="Com Jugar" id="welcomeImg" />
 </div>
 
 
@@ -464,59 +426,19 @@
   }
 
   onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  if (user && pendingResult !== null) {
-    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-    pendingResult = null;
-  }
-
-  if (user) {
-    await checkIfSolvedToday();
-    if (window.location.pathname.endsWith("index.html")) {
-      window.location.href = "view-stats.html";
+    currentUser = user;
+    if (user && pendingResult !== null) {
+      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+      pendingResult = null;
     }
-  } else {
-    setTimeout(() => {
-      showWelcomePopupIfNeeded();
-    }, 1000);
-  }
-});
 
-
-  async function showWelcomePopupIfNeeded() {
-  if (!currentUser) {
-    document.getElementById("welcomePopup").classList.add("visible");
-    return;
-  }
-
-  try {
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      document.getElementById("welcomePopup").classList.add("visible");
+    if (user) {
+      await checkIfSolvedToday();
+      if (window.location.pathname.endsWith("index.html")) {
+        window.location.href = "view-stats.html";
+      }
     }
-  } catch (err) {
-    console.error("Error checking user doc:", err);
-  }
-}
-welcomePopup.addEventListener("click", (e) => {
-  if (e.target === welcomePopup) {
-    welcomePopup.classList.remove("visible");
-  }
-});
-
-
-
-// Handle popup interactions
-const welcomePopup = document.getElementById("welcomePopup");
-const welcomeImg = document.getElementById("welcomeImg");
-
-welcomeImg.addEventListener("click", () => {
-  window.location.href = "normes.html";
-});
-
-
+  });
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;

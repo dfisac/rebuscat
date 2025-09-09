@@ -469,11 +469,13 @@
 
     const todayStatRef = doc(db, "users", user.uid, "stats", getLocalToday());
     const todaySnap = await getDoc(todayStatRef);
+    const everStat = doc(db, "users", user.uid);
+    const everSnap = await getDoc(everStat);
 
     if (todaySnap.exists()) {
       await checkIfSolvedToday();
     } else {
-      showWelcomePopup();
+      if (everSnap.exists()!) {showWelcomePopup();}
     }
   } else {
     showWelcomePopup();

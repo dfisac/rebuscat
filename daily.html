@@ -461,37 +461,25 @@
   onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
-  if (user && pendingResult !== null) {
-    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-    pendingResult = null;
-  }
-
   if (user) {
-    // Check if user has any stats
-    const userDocRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userDocRef);
+    if (pendingResult !== null) {
+      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+      pendingResult = null;
+    }
 
-    if (userSnap.exists()) {
-      // ✅ User exists → check if solved today
-      const todayStatRef = doc(db, "users", user.uid, "stats", getLocalToday());
-      const todaySnap = await getDoc(todayStatRef);
+    const todayStatRef = doc(db, "users", user.uid, "stats", getLocalToday());
+    const todaySnap = await getDoc(todayStatRef);
 
-      if (todaySnap.exists()) {
-        // Already solved today → show view-stats/past puzzles modal
-        await checkIfSolvedToday(); // your existing function handles this
-      } else {
-        // User exists but hasn't solved today → show welcome popup
-        showWelcomePopup();
-      }
+    if (todaySnap.exists()) {
+      await checkIfSolvedToday();
     } else {
-      // User doc does not exist → first login → show welcome popup
       showWelcomePopup();
     }
   } else {
-    // Not logged-in → show welcome popup
     showWelcomePopup();
   }
 });
+
 
 
 

@@ -471,12 +471,28 @@
     }
   });
 
-  async function showWelcomePopupIfNeeded() {
-  // Only show if user is NOT logged in
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+async function showWelcomePopupIfNeeded() {
   if (!currentUser) {
     document.getElementById("welcomePopup").style.display = "flex";
     return;
   }
+
+  try {
+    const statsRef = collection(db, "users", currentUser.uid, "stats");
+    const statsSnap = await getDocs(statsRef);
+
+    if (statsSnap.empty) {
+      // brand new user → show popup
+      document.getElementById("welcomePopup").style.display = "flex";
+    }
+  } catch (err) {
+    console.error("Error checking user stats:", err);
+    document.getElementById("welcomePopup").style.display = "flex";
+  }
+}
+
 
   // Check Firestore if user has any stats
   try {

@@ -315,6 +315,32 @@
   text-align: left;       /* was center */
   align-self: flex-start; /* forces it to the left of the flex container */
 }
+/* Fullscreen modal */
+#startModal {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(128,128,128,0.7); /* grey transparent */
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+/* Image styling and hover zoom */
+#startImage {
+  max-width: 50%;
+  max-height: 50%;
+  transition: transform 0.3s;
+}
+
+#startImage:hover {
+  transform: scale(1.1);
+}
 
 
 
@@ -323,6 +349,11 @@
 <body>
 <div id="header"></div>
 <script type="module" src="load-header.js"></script>
+
+<!-- Fullscreen Image Modal -->
+<div id="startModal">
+  <img src="comjugar.png" alt="Com Jugar" id="startImage">
+</div>
 
 <!-- Login/Stats Modal -->
 <div id="loginModal">
@@ -740,6 +771,46 @@ input.addEventListener("keydown", (e) => {
 }
 
 loadDailyPuzzle();
+
+async function showStartModalIfNeeded() {
+  let showModal = false;
+
+  if (!currentUser) {
+    // No user logged in
+    showModal = true;
+  } else {
+    // Check if stats folder exists in Firestore
+    const statDocRef = doc(db, "users", currentUser.uid, "stats", "dummy"); 
+    // "dummy" is just to get the collection ref
+    const statsSnap = await getDoc(statDocRef);
+    if (!statsSnap.exists()) {
+      showModal = true;
+    }
+  }
+
+  if (showModal) {
+    const startModal = document.getElementById("startModal");
+    startModal.style.display = "flex";
+
+    // Clicking anywhere outside the image closes modal
+    startModal.addEventListener("click", (e) => {
+      if (e.target.id === "startModal") {
+        startModal.style.display = "none";
+      }
+    });
+
+    // Clicking the image navigates to normes.html
+    document.getElementById("startImage").addEventListener("click", () => {
+      window.location.href = "normes.html";
+    });
+  }
+}
+
+// Call after puzzle loads
+window.addEventListener("load", () => {
+  showStartModalIfNeeded();
+});
+
 
 </script>
 <footer>

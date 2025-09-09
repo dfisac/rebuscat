@@ -469,19 +469,24 @@
   }
 
   onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user && pendingResult !== null) {
-      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-      pendingResult = null;
-    }
+  currentUser = user;
+  if (user && pendingResult !== null) {
+    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+    pendingResult = null;
+  }
 
-    if (user) {
-      await checkIfSolvedToday();
-      if (window.location.pathname.endsWith("index.html")) {
-        window.location.href = "view-stats.html";
-      }
+  if (user) {
+    await checkIfSolvedToday();
+    if (window.location.pathname.endsWith("index.html")) {
+      window.location.href = "view-stats.html";
     }
-  });
+  } else {
+    // ✅ only if NOT logged in
+    setTimeout(() => {
+      showWelcomePopupIfNeeded();
+    }, 1000);
+  }
+});
 
   async function showWelcomePopupIfNeeded() {
   // Only show if user is NOT logged in
@@ -520,11 +525,6 @@ welcomePopup.addEventListener("click", (e) => {
   }
 });
 
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    document.getElementById("welcomePopup").classList.add("visible");
-  }, 1000);
-});
 
 
   async function saveMistakesDaily(mistakesCount, difficulty) {

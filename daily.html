@@ -316,11 +316,39 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
+/* Fullscreen popup overlay */
+#welcomePopup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(128, 128, 128, 0.7); /* grey transparent */
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Image inside popup */
+#welcomePopup img {
+  width: 70%; /* same as login modal max width */
+  max-width: 380px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+/* Zoom effect on hover */
+#welcomePopup img:hover {
+  transform: scale(1.1);
+}
 
 
 </style>
 </head>
 <body>
+<div id="welcomePopup">
+  <img src="comjugar.png" alt="Com Jugar">
+</div>
 <div id="header"></div>
 <script type="module" src="load-header.js"></script>
 
@@ -426,19 +454,35 @@
   }
 
   onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user && pendingResult !== null) {
-      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-      pendingResult = null;
-    }
+  currentUser = user;
 
-    if (user) {
+  // ✅ If logged-in and pendingResult exists, save
+  if (user && pendingResult !== null) {
+    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+    pendingResult = null;
+  }
+
+  // ✅ Logged-in user with stats
+  if (user) {
+    // Check if any stats exist for this user
+    const statsRef = doc(db, "users", user.uid);
+    const statsSnap = await getDoc(statsRef);
+
+    if (!statsSnap.exists()) {
+      // No stats saved before
+      showWelcomePopup();
+    } else {
       await checkIfSolvedToday();
       if (window.location.pathname.endsWith("index.html")) {
         window.location.href = "view-stats.html";
       }
     }
-  });
+  } else {
+    // Not logged-in
+    showWelcomePopup();
+  }
+});
+
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;
@@ -740,6 +784,29 @@ input.addEventListener("keydown", (e) => {
 }
 
 loadDailyPuzzle();
+
+function showWelcomePopup() {
+  const popup = document.getElementById("welcomePopup");
+  const popupImg = popup.querySelector("img");
+
+  // 2s delay then fade-in
+  setTimeout(() => {
+    popup.style.display = "flex";
+  }, 2000);
+
+  // Click on image -> navigate
+  popupImg.addEventListener("click", () => {
+    window.location.href = "normes.html";
+  });
+
+  // Click outside image -> close popup and continue game
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      popup.style.display = "none";
+    }
+  });
+}
+
 
 </script>
 <footer>

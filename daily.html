@@ -316,6 +316,33 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
+  /* Fullscreen welcome popup */
+#welcomePopup {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(128,128,128,0.7); /* grey transparent */
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Image inside popup */
+#welcomePopup img {
+  width: 70%; /* same width as your login modal */
+  max-width: 380px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+/* Hover zoom effect */
+#welcomePopup img:hover {
+  transform: scale(1.05);
+}
+
 
 
 </style>
@@ -363,6 +390,10 @@
     <div id="difficultyDisplay"></div>
     <div id="mistakeCounter" style="background-color: #ffb347; color: white;">Errors: 0</div>
   </div>
+</div>
+
+<div id="welcomePopup">
+  <img src="comjugar.png" alt="Com Jugar" id="welcomeImg" />
 </div>
 
 
@@ -439,6 +470,50 @@
       }
     }
   });
+
+  async function showWelcomePopupIfNeeded() {
+  // Only show if user is NOT logged in
+  if (!currentUser) {
+    document.getElementById("welcomePopup").style.display = "flex";
+    return;
+  }
+
+  // Check Firestore if user has any stats
+  try {
+    const statsRef = doc(db, "users", currentUser.uid, "stats", getLocalToday());
+    const statsSnap = await getDoc(statsRef);
+    if (!statsSnap.exists()) {
+      // No stats today → show welcome
+      document.getElementById("welcomePopup").style.display = "flex";
+    }
+  } catch (err) {
+    console.error("Error checking user stats:", err);
+    // fallback: show popup
+    document.getElementById("welcomePopup").style.display = "flex";
+  }
+}
+
+// Handle popup interactions
+const welcomePopup = document.getElementById("welcomePopup");
+const welcomeImg = document.getElementById("welcomeImg");
+
+welcomeImg.addEventListener("click", () => {
+  window.location.href = "normes.html";
+});
+
+// Clicking outside image closes popup
+welcomePopup.addEventListener("click", (e) => {
+  if (e.target === welcomePopup) {
+    welcomePopup.style.display = "none";
+  }
+});
+
+// Run after page loads
+window.addEventListener("load", () => {
+  // Delay slightly to ensure puzzle loads
+  setTimeout(showWelcomePopupIfNeeded, 500);
+});
+
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;

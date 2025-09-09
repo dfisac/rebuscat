@@ -330,6 +330,18 @@
   justify-content: center;
 }
 
+#welcomePopup {
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+#welcomePopup.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
 /* Image inside popup */
 #welcomePopup img {
   width: 70%; /* same width as your login modal */
@@ -508,10 +520,10 @@ welcomePopup.addEventListener("click", (e) => {
   }
 });
 
-// Run after page loads
 window.addEventListener("load", () => {
-  // Delay slightly to ensure puzzle loads
-  setTimeout(showWelcomePopupIfNeeded, 1500);
+  setTimeout(() => {
+    document.getElementById("welcomePopup").classList.add("visible");
+  }, 1000);
 });
 
 

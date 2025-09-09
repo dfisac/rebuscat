@@ -478,20 +478,22 @@
     return;
   }
 
-  // Check Firestore if user has any stats
   try {
-    const statsRef = doc(db, "users", currentUser.uid, "stats", getLocalToday());
-    const statsSnap = await getDoc(statsRef);
-    if (!statsSnap.exists()) {
-      // No stats today → show welcome
+    // Check if the user document exists
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      // No user file → show welcome
       document.getElementById("welcomePopup").style.display = "flex";
     }
   } catch (err) {
-    console.error("Error checking user stats:", err);
+    console.error("Error checking user doc:", err);
     // fallback: show popup
     document.getElementById("welcomePopup").style.display = "flex";
   }
 }
+
 
 // Handle popup interactions
 const welcomePopup = document.getElementById("welcomePopup");

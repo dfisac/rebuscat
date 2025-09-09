@@ -454,6 +454,14 @@
     }
   }
 
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+async function userHasStats(userId) {
+  const statsColRef = collection(db, "users", userId, "stats");
+  const statsSnap = await getDocs(statsColRef);
+  return !statsSnap.empty; // true if user has any stats
+}
+
   onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   if (user && pendingResult !== null) {
@@ -462,18 +470,14 @@
   }
 
   if (user) {
-    await checkIfSolvedToday(); // check if already solved
-    // 👇 If no stats found, show popup
-    const today = getLocalToday();
-    const statDocRef = doc(db, "users", user.uid, "stats", today);
-    const statSnap = await getDoc(statDocRef);
-    if (!statSnap.exists()) {
-      showFirstVisitPopup();
-    }
-  } else {
-    // 👇 Not logged in, show popup
-    showFirstVisitPopup();
+  const hasStats = await userHasStats(user.uid);
+  if (!hasStats) {
+    showFirstVisitPopup(); // only show if user never saved any stats
   }
+} else {
+  showFirstVisitPopup(); // not logged in
+}
+
 });
 
 

@@ -475,7 +475,9 @@
     if (todaySnap.exists()) {
       await checkIfSolvedToday();
     } else {
-      if (everSnap.exists()!) {showWelcomePopup();}
+      if (everSnap.exists()!) {
+        showWelcomePopup();
+      }
     }
   } else {
     showWelcomePopup();

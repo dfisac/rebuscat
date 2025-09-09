@@ -779,13 +779,16 @@ async function showStartModalIfNeeded() {
     // No user logged in
     showModal = true;
   } else {
-    // Check if stats folder exists in Firestore
-    const statDocRef = doc(db, "users", currentUser.uid, "stats", "dummy"); 
-    // "dummy" is just to get the collection ref
-    const statsSnap = await getDoc(statDocRef);
-    if (!statsSnap.exists()) {
-      showModal = true;
-    }
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+const statsColRef = collection(db, "users", currentUser.uid, "stats");
+const statsSnap = await getDocs(statsColRef);
+
+if (statsSnap.empty) {
+  // No stats documents exist for this user
+  showModal = true;
+}
+
   }
 
   if (showModal) {
@@ -794,7 +797,7 @@ async function showStartModalIfNeeded() {
 
     // Clicking anywhere outside the image closes modal
     startModal.addEventListener("click", (e) => {
-      if (e.target.id === "startModal") {
+      if (e.target === "startModal") {
         startModal.style.display = "none";
       }
     });

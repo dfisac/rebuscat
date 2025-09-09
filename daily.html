@@ -430,28 +430,33 @@
   }
 
   async function checkIfSolvedToday() {
-    if (!currentUser) return;
+  if (!currentUser) return false;
 
-    const today = getLocalToday(); // use local date
-    const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
-    const statSnap = await getDoc(statDocRef);
+  const today = getLocalToday();
+  const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
+  const statSnap = await getDoc(statDocRef);
 
-    if (statSnap.exists()) {
-      const data = statSnap.data();
-      const mistakesToday = data.mistakes ?? 0;
+  if (statSnap.exists()) {
+    const data = statSnap.data();
+    const mistakesToday = data.mistakes ?? 0;
 
-      const messageText = `Felicitats! L'has resolt en ${mistakesToday} error${mistakesToday !== 1 ? "s" : ""}.`;
+    const messageText = `Felicitats! L'has resolt en ${mistakesToday} error${mistakesToday !== 1 ? "s" : ""}.`;
 
-      document.getElementById("mistakeMessage").textContent = messageText;
-      document.getElementById("modalLoginSection").style.display = "none";
-      document.getElementById("modalStatsSection").style.display = "block";
-      addKeepPlayingButton(true);
-      document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("mistakeMessage").textContent = messageText;
+    document.getElementById("modalLoginSection").style.display = "none";
+    document.getElementById("modalStatsSection").style.display = "block";
+    addKeepPlayingButton(true);
+    document.getElementById("loginModal").style.display = "flex";
 
-      mistakes = mistakesToday;
-      updateMistakeCounter();
-    }
+    mistakes = mistakesToday;
+    updateMistakeCounter();
+
+    return true; // already solved
   }
+
+  return false; // not solved today
+}
+
 
   onAuthStateChanged(auth, async (user) => {
   currentUser = user;

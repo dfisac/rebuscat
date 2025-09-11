@@ -315,6 +315,39 @@
   text-align: left;       /* was center */
   align-self: flex-start; /* forces it to the left of the flex container */
 }
+/* 🔹 Fullscreen Popup Overlay */
+#infoPopup {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255, 165, 0, 0.85); /* orange transparent */
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.6s ease; /* fade effect */
+}
+
+/* Show with fade-in */
+#infoPopup.show {
+  display: flex;
+  opacity: 1;
+}
+
+/* 🔹 Image inside popup */
+#infoPopup img {
+  max-width: 90%;
+  width: 380px; /* same as login modal */
+  height: auto;
+  border-radius: 1rem;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+#infoPopup img:hover {
+  transform: scale(1.1); /* zoom effect */
+}
 
 
 
@@ -323,6 +356,10 @@
 <body>
 <div id="header"></div>
 <script type="module" src="load-header.js"></script>
+
+  <div id="infoPopup">
+  <img src="comjugar.png" alt="Com Jugar" id="popupImage">
+</div>
 
 <!-- Login/Stats Modal -->
 <div id="loginModal">
@@ -425,20 +462,50 @@
     }
   }
 
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user && pendingResult !== null) {
-      await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
-      pendingResult = null;
-    }
+ onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
 
-    if (user) {
-      await checkIfSolvedToday();
-      if (window.location.pathname.endsWith("index.html")) {
-        window.location.href = "view-stats.html";
-      }
+  if (user && pendingResult !== null) {
+    await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
+    pendingResult = null;
+  }
+
+  if (user) {
+    await checkIfSolvedToday();
+    if (window.location.pathname.endsWith("index.html")) {
+      window.location.href = "view-stats.html";
     }
-  });
+  } else {
+    // 🔹 Show popup ONLY for not-logged-in users
+    showInfoPopup();
+  }
+});
+
+
+  // 🔹 Popup handling
+function showInfoPopup() {
+  const popup = document.getElementById("infoPopup");
+  if (popup) {
+    setTimeout(() => popup.classList.add("show"), 2000); // 2s delay
+  }
+}
+
+function hideInfoPopup() {
+  const popup = document.getElementById("infoPopup");
+  if (popup) popup.classList.remove("show");
+}
+
+document.getElementById("popupImage").addEventListener("click", (e) => {
+  e.stopPropagation(); // prevent closing
+  window.location.href = "normes.html"; // go to normes
+});
+
+document.getElementById("infoPopup").addEventListener("click", (e) => {
+  if (e.target.id === "infoPopup") {
+    hideInfoPopup();
+  }
+});
+
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;

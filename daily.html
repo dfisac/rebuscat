@@ -716,21 +716,25 @@ async function loadDailyPuzzle() {
           input.dataset.solution = char;
           input.autocomplete = "off";
 
-          input.addEventListener("input", (e) => {
+input.addEventListener("input", (e) => {
   const value = input.value.toUpperCase();
-  input.value = value;
 
-  if (value.length === 1) {
+  // Always keep only the latest character typed
+  if (value.length > 1) {
+    input.value = value.slice(-1); 
+  } else {
+    input.value = value;
+  }
+
+  // auto-move to next if filled
+  if (input.value.length === 1) {
     const nextIndex = allInputs.indexOf(input) + 1;
-    if (nextIndex < allInputs.length) allInputs[nextIndex].focus();
+    if (nextIndex < allInputs.length) {
+      allInputs[nextIndex].focus();
+    }
   }
 });
 
-input.addEventListener("focus", () => {
-  if (input.value !== "") {
-    input.value = "";
-  }
-});
           
 input.addEventListener("keydown", (e) => {
   if (e.key === "Backspace" && input.value === "") {

@@ -716,24 +716,20 @@ async function loadDailyPuzzle() {
           input.dataset.solution = char;
           input.autocomplete = "off";
 
-input.addEventListener("input", (e) => {
-  const value = input.value.toUpperCase();
+input.addEventListener("keydown", (e) => {
+  // Only act on letter keys (and ignore Backspace, Tab, etc.)
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); // stop the browser from appending
+    input.value = e.key.toUpperCase();
 
-  // Always keep only the latest character typed
-  if (value.length > 1) {
-    input.value = value.slice(-1); 
-  } else {
-    input.value = value;
-  }
-
-  // auto-move to next if filled
-  if (input.value.length === 1) {
+    // Jump to next input automatically
     const nextIndex = allInputs.indexOf(input) + 1;
     if (nextIndex < allInputs.length) {
       allInputs[nextIndex].focus();
     }
   }
 });
+
 
           
 input.addEventListener("keydown", (e) => {

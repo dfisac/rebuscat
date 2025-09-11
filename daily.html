@@ -317,7 +317,8 @@
 }
 /* 🔹 Fullscreen Popup Overlay */
 #infoPopup {
-  display: none; /* hidden by default */
+  display: flex; /* hidden by default */
+  visibility: hidden;
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
@@ -327,12 +328,14 @@
   z-index: 10000;
   opacity: 0;
   transition: opacity 1.6s ease; /* fade effect */
+  pointer-events: none;
 }
 
 /* Show with fade-in */
 #infoPopup.show {
-  display: flex;
+  visibility: visible;
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* 🔹 Image inside popup */

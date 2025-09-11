@@ -316,39 +316,11 @@
   align-self: flex-start; /* forces it to the left of the flex container */
 }
 
-/* Fullscreen popup overlay */
-#welcomePopup {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(128, 128, 128, 0.7); /* grey transparent */
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  animation: fadeIn 0.5s ease forwards;
-}
-
-/* Image inside popup */
-#welcomePopup img {
-  width: 70%; /* same as login modal max width */
-  max-width: 380px;
-  transition: transform 0.3s ease;
-  cursor: pointer;
-}
-
-/* Zoom effect on hover */
-#welcomePopup img:hover {
-  transform: scale(1.1);
-}
 
 
 </style>
 </head>
 <body>
-<div id="welcomePopup">
-  <img src="comjugar.png" alt="Com Jugar">
-</div>
 <div id="header"></div>
 <script type="module" src="load-header.js"></script>
 
@@ -430,62 +402,43 @@
   }
 
   async function checkIfSolvedToday() {
-  if (!currentUser) return false;
+    if (!currentUser) return;
 
-  const today = getLocalToday();
-  const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
-  const statSnap = await getDoc(statDocRef);
+    const today = getLocalToday(); // use local date
+    const statDocRef = doc(db, "users", currentUser.uid, "stats", today);
+    const statSnap = await getDoc(statDocRef);
 
-  if (statSnap.exists()) {
-    const data = statSnap.data();
-    const mistakesToday = data.mistakes ?? 0;
+    if (statSnap.exists()) {
+      const data = statSnap.data();
+      const mistakesToday = data.mistakes ?? 0;
 
-    const messageText = `Felicitats! L'has resolt en ${mistakesToday} error${mistakesToday !== 1 ? "s" : ""}.`;
+      const messageText = `Felicitats! L'has resolt en ${mistakesToday} error${mistakesToday !== 1 ? "s" : ""}.`;
 
-    document.getElementById("mistakeMessage").textContent = messageText;
-    document.getElementById("modalLoginSection").style.display = "none";
-    document.getElementById("modalStatsSection").style.display = "block";
-    addKeepPlayingButton(true);
-    document.getElementById("loginModal").style.display = "flex";
+      document.getElementById("mistakeMessage").textContent = messageText;
+      document.getElementById("modalLoginSection").style.display = "none";
+      document.getElementById("modalStatsSection").style.display = "block";
+      addKeepPlayingButton(true);
+      document.getElementById("loginModal").style.display = "flex";
 
-    mistakes = mistakesToday;
-    updateMistakeCounter();
-
-    return true; // already solved
+      mistakes = mistakesToday;
+      updateMistakeCounter();
+    }
   }
 
-  return false; // not solved today
-}
-
-
   onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-
-  if (user) {
-    if (pendingResult !== null) {
+    currentUser = user;
+    if (user && pendingResult !== null) {
       await saveMistakesDaily(pendingResult.mistakes, pendingResult.difficulty);
       pendingResult = null;
     }
 
-    const todayStatRef = doc(db, "users", user.uid, "stats", getLocalToday());
-    const todaySnap = await getDoc(todayStatRef);
-    const everStat = doc(db, "users", user.uid);
-    const everSnap = await getDoc(everStat);
-
-    if (todaySnap.exists()) {
+    if (user) {
       await checkIfSolvedToday();
-    } else {
-      //if (everSnap.exists()!) {
-        showWelcomePopup();
-      //}
+      if (window.location.pathname.endsWith("index.html")) {
+        window.location.href = "view-stats.html";
+      }
     }
-  } else {
-    showWelcomePopup();
-  }
-});
-
-
-
+  });
 
   async function saveMistakesDaily(mistakesCount, difficulty) {
     if (!currentUser) return;
@@ -787,29 +740,6 @@ input.addEventListener("keydown", (e) => {
 }
 
 loadDailyPuzzle();
-
-function showWelcomePopup() {
-  const popup = document.getElementById("welcomePopup");
-  const popupImg = popup.querySelector("img");
-
-  // 2s delay then fade-in
-  setTimeout(() => {
-    popup.style.display = "flex";
-  }, 2000);
-
-  // Click on image -> navigate
-  popupImg.addEventListener("click", () => {
-    window.location.href = "normes.html";
-  });
-
-  // Click outside image -> close popup and continue game
-  popup.addEventListener("click", (e) => {
-    if (e.target === popup) {
-      popup.style.display = "none";
-    }
-  });
-}
-
 
 </script>
 <footer>

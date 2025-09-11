@@ -468,7 +468,7 @@
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      errBox.textContent = err.message;
+      errBox.textContent = "L'usuari i contrasenya no corresponen a cap usuari.";
     }
   });
 

@@ -464,7 +464,7 @@
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value.trim();
     const errBox = document.getElementById("loginError");
-    errBox.textContent = "";
+    errBox.textContent = "L'usuari i contrasenya no corresponen a cap usuari.";
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {

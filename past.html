@@ -390,6 +390,12 @@ function showPuzzle(dateStr) {
   }
 });
 
+input.addEventListener("focus", () => {
+  if (input.value !== "") {
+    input.value = "";
+  }
+});
+
 input.addEventListener("keydown", (e) => {
   if (e.key === "Backspace" && input.value === "") {
     const prevIndex = allInputs.indexOf(input) - 1;
